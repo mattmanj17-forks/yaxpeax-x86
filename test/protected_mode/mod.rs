@@ -3068,13 +3068,24 @@ fn test_sse4a() {
 
 #[test]
 fn test_3dnow() {
-    test_display(&[0x0f, 0x0f, 0xe0, 0x8a], "pfnacc mm4, mm0");
-    test_display(&[0x0f, 0x0f, 0x38, 0x8e], "pfpnacc mm7, qword [eax]");
-    test_display(&[0x65, 0x67, 0x65, 0x65, 0x0f, 0x0e], "femms");
-    test_display(&[0x3e, 0xf3, 0x2e, 0xf2, 0x0f, 0x0f, 0x64, 0x93, 0x93, 0xa4], "pfmax mm4, qword cs:[ebx + edx * 4 - 0x6d]");
-    test_display(&[0x26, 0x36, 0x0f, 0x0f, 0x70, 0xfb, 0x0c], "pi2fw mm6, qword ss:[eax - 0x5]");
-    test_display(&[0x66, 0x0f, 0x0f, 0xc6, 0xb7], "pmulhrw mm0, mm6");
-    test_display(&[0x0f, 0x0f, 0xc6, 0xb7], "pmulhrw mm0, mm6");
+    fn test_instr(bytes: &[u8], text: &'static str) {
+        test_display_under(&InstDecoder::minimal().with_3dnow(), bytes, text);
+        test_display_under(&InstDecoder::default(), bytes, text);
+        test_invalid_under(&InstDecoder::minimal(), bytes);
+        test_invalid_under(&InstDecoder::minimal(), bytes);
+        test_display_under(&yaxpeax_x86::protected_mode::uarch::amd::k8(), bytes, text);
+        test_invalid_under(&yaxpeax_x86::protected_mode::uarch::amd::bulldozer(), bytes);
+        test_invalid_under(&yaxpeax_x86::protected_mode::uarch::intel::netburst(), bytes);
+    }
+
+    test_instr(&[0x0f, 0x0f, 0xe0, 0x8a], "pfnacc mm4, mm0");
+    test_instr(&[0x0f, 0x0f, 0x38, 0x8e], "pfpnacc mm7, qword [eax]");
+    test_instr(&[0x65, 0x67, 0x65, 0x65, 0x0f, 0x0e], "femms");
+    test_instr(&[0x3e, 0xf3, 0x2e, 0xf2, 0x0f, 0x0f, 0x64, 0x93, 0x93, 0xa4], "pfmax mm4, qword cs:[ebx + edx * 4 - 0x6d]");
+    test_instr(&[0x26, 0x36, 0x0f, 0x0f, 0x70, 0xfb, 0x0c], "pi2fw mm6, qword ss:[eax - 0x5]");
+    test_instr(&[0x66, 0x0f, 0x0f, 0xc6, 0xb7], "pmulhrw mm0, mm6");
+    test_instr(&[0x0f, 0x0f, 0xc6, 0xb7], "pmulhrw mm0, mm6");
+    test_instr(&[0x0f, 0x0e], "femms");
 }
 
 // first appeared in tremont

@@ -3454,7 +3454,8 @@ fn test_3dnow() {
         test_display_under(&InstDecoder::default(), bytes, text);
         test_invalid_under(&InstDecoder::minimal(), bytes);
         test_invalid_under(&InstDecoder::minimal(), bytes);
-        test_invalid_under(&yaxpeax_x86::long_mode::uarch::amd::k8(), bytes);
+        test_display_under(&yaxpeax_x86::long_mode::uarch::amd::k8(), bytes, text);
+        test_invalid_under(&yaxpeax_x86::long_mode::uarch::amd::bulldozer(), bytes);
         test_invalid_under(&yaxpeax_x86::long_mode::uarch::intel::netburst(), bytes);
     }
 

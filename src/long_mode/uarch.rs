@@ -35,13 +35,15 @@ pub mod amd {
     /// support - SSE2 and no later.
     pub fn k8() -> InstDecoder {
         InstDecoder::minimal()
+            .with_3dnow()
+            .with_3dnowprefetch()
+            .with_cmov()
     }
 
     /// `k10` was the successor to `k8`, launched in 2007. `k10` cores extended SSE support through
     /// to SSE4.2a, as well as consistent `cmov` support, among other features.
     pub fn k10() -> InstDecoder {
         k8()
-            .with_cmov()
             .with_cmpxchg16b()
             .with_svm()
             .with_abm()
@@ -51,9 +53,20 @@ pub mod amd {
     }
 
     /// `Bulldozer` was the successor to `K10`, launched in 2011. `Bulldozer` cores include AVX
-    /// support among other extensions, and are notable for including `AESNI`.
+    /// support among other extensions, and are notable for including `AESNI`. `Bulldozer` was also
+    /// the first microarchitecture to *remove* support for 3DNow instructions.
     pub fn bulldozer() -> InstDecoder {
-        k10()
+        InstDecoder::minimal()
+            // first, apply all the K8 extensions again, sans 3DNow
+            // .. should be sse, sse2
+            // then the K10
+            .with_cmpxchg16b()
+            .with_svm()
+            .with_abm()
+            .with_lahfsahf()
+            .with_sse3()
+            .with_sse4a()
+            // now the new extensions
             .with_ssse3()
             .with_sse4()
             .with_sse4_2()
@@ -101,9 +114,18 @@ pub mod amd {
     /// SHA, RDSEED, and other extensions.
     pub fn zen() -> InstDecoder {
         // no nice way to *un*set feature bits, but several extensions were dropped.
-        // so, start again from K10.
-        k10()
-            // first, bundle all the K10->Bulldozer features..
+        // so, start again.
+        InstDecoder::minimal()
+            // first, apply all the K8 extensions again, sans 3DNow
+            // .. should be sse, sse2
+            // then the K10
+            .with_cmpxchg16b()
+            .with_svm()
+            .with_abm()
+            .with_lahfsahf()
+            .with_sse3()
+            .with_sse4a()
+            // now, bundle all the K10->Bulldozer features..
             .with_ssse3()
             .with_sse4()
             .with_sse4_2()
@@ -114,11 +136,8 @@ pub mod amd {
             .with_avx()
             .with_xsave()
             .with_skinit()
-            // now all the Bulldozer (/Piledriver/Steamroller/Excavator)->Zen features
+            // finally all the Bulldozer (/Piledriver/Steamroller/Excavator)->Zen features
             .with_avx2()
-            .with_aesni()
-            .with_pclmulqdq()
-            .with_f16c()
             .with_movbe()
             .with_bmi2()
             .with_adx()
