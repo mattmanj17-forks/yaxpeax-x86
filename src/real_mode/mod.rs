@@ -2709,6 +2709,14 @@ impl LengthedInstruction for Instruction {
 ///
 /// unless you're using an `Arc<Mutex<InstDecoder>>`, which is _fine_ but i'd be very curious about
 /// the design requiring that.
+///
+/// `InstDecoder::default()` constructs a decoder that will decode all instructions valid in 16-bit
+/// mode. the associated per-extension functions are not yet fully tested or implemented, and
+/// should be considered unstable.
+///
+/// the per-extension functions themselves will not change version to version, but if an
+/// instruction is incorrectly accepted or rejected under a particular subset of ISA extension
+/// flags, this will be fixed in a minor or patch version of `yaxpeax-x86.
 #[derive(PartialEq, Copy, Clone, Eq, Hash, PartialOrd, Ord)]
 pub struct InstDecoder {
     flags: [u64; 2],
