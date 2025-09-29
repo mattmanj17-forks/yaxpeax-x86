@@ -15,6 +15,10 @@ Build.run({"cargo", "test", "--no-default-features", "--features", "fmt"}, {name
 Build.run({"cargo", "test", "--no-default-features", "--features", "std"}, {name="test nostdlib/std"})
 Build.run({"cargo", "test", "--no-default-features", "--features", "std,fmt"}, {name="test nostdlib/std+fmt"})
 
+-- the interesting benchmarking happens through disas-bench, but the in-tree capstone bench isn't gone *quite* yet.
+Step.start("bench")
+Build.run({"cargo", "test", "--no-default-features", "capstone_bench"}, {name="bench smoketest"})
+
 Step.start("ffi")
 Step.push("build")
 Build.run({"rustup", "component", "add", "rust-src", "--toolchain", "nightly-x86_64-unknown-linux-gnu"})

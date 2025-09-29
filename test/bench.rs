@@ -9,8 +9,6 @@ use yaxpeax_arch::Decoder;
 use std::ffi::c_void;
 
 #[cfg(feature = "capstone_bench")]
-use std::io::Write;
-
 use test::Bencher;
 
 /*
@@ -38,11 +36,9 @@ fn bench_1020000_instrs(b: &mut Bencher) {
 #[bench]
 fn bench_102000_intrs_capstone(b: &mut Bencher) {
     let handle = get_cs_handle();
-//    panic!("Allocating..");
-    let mut instr: *mut c_void = unsafe { cs_malloc(handle) };
-//    panic!("Allocated...");
+    let instr: *mut c_void = unsafe { cs_malloc(handle) };
     b.iter(|| {
-        for i in (0..3000) {
+        for _i in 0..3000 {
             test::black_box(do_capstone_decode_swathe(handle, instr));
         }
     })
@@ -86,14 +82,15 @@ const DECODE_DATA: [u8; 130] = [
 ];
 
 fn do_decode_swathe() {
-//    let mut buf = [0u8; 128];
+    #[cfg(all(feature = "capstone_bench", feature = "fmt"))]
+    let mut buf = [0u8; 128];
     let mut result = yaxpeax_x86::long_mode::Instruction::invalid();
     let mut reader = yaxpeax_arch::U8Reader::new(&DECODE_DATA[..]);
     let decoder = yaxpeax_x86::long_mode::InstDecoder::default();
     loop {
         match decoder.decode_into(&mut result, &mut reader) {
             Ok(()) => {
-                #[cfg(feature = "capstone_bench")]
+                #[cfg(all(feature = "capstone_bench", feature = "fmt"))]
                 test::black_box(write!(&mut buf[..], "{}", result));
                 test::black_box(&result);
             },
@@ -129,13 +126,8 @@ extern "C" {
 #[cfg(feature = "capstone_bench")]
 fn get_cs_handle() -> usize {
     let mut handle: usize = 0;
-    let res = unsafe { cs_open(3, 4, &mut handle as *mut usize) };
+    let _res = unsafe { cs_open(3, 4, &mut handle as *mut usize) };
     handle
-}
-
-#[cfg(feature = "capstone_bench")]
-fn get_instr(handle: usize) -> *mut c_void {
-    unsafe { cs_malloc(handle) as *mut c_void }
 }
 
 #[cfg(feature = "capstone_bench")]
@@ -159,12 +151,3 @@ fn do_capstone_decode_swathe(cs: usize, instr: *mut c_void) {
         }
     }
 }
-
-//#[bench]
-//#[ignore]
-// VEX prefixes are not supported at the moment, in any form
-//fn test_avx() {
-//    assert_eq!(&format!("{}", decode(
-//        &[0xc5, 0xf8, 0x10, 0x00]
-//    ).unwrap()), "vmovups xmm0, xmmword [rax]");
-//}
