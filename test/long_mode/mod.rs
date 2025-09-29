@@ -5,7 +5,7 @@ mod operand;
 mod opcode;
 #[cfg(feature="fmt")]
 mod display;
-#[cfg(feature="std")]
+#[cfg(all(feature="std", feature="fmt"))]
 mod descriptions;
 mod evex_generated;
 mod reuse_test;
