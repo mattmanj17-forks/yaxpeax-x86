@@ -2994,7 +2994,7 @@ mod buffer_sink {
         /// into.
         ///
         /// SAFETY: callers must print at most one instruction into this handle.
-        unsafe fn write_handle(&mut self) -> yaxpeax_arch::display::InstructionTextSink {
+        unsafe fn write_handle<'buf>(&'buf mut self) -> yaxpeax_arch::display::InstructionTextSink<'buf> {
             self.content.clear();
             // Safety: `content` was just cleared, so writing begins at the start of the buffer.
             // `content`is large enough to hold a fully-formatted instruction (see
