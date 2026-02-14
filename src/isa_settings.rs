@@ -826,7 +826,7 @@ macro_rules! gen_arch_isa_settings {
             gfni, with_gfni = 35;
             intel_quirks, with_intel_quirks = 36;
             invpcid, with_invpcid = 37;
-            #[doc="`lahfsahf` is only unset for early revisions of 64-bit amd and intel chips. unfortunately"]
+            #[doc="`lahfsahf` is only unset for early revisions of 64-bit amd and Intel chips. unfortunately"]
             #[doc="the clearest documentation on when these instructions were reintroduced into 64-bit"]
             #[doc="architectures seems to be"]
             #[doc="[wikipedia](https://en.wikipedia.org/wiki/X86-64#Older_implementations):"]
@@ -838,9 +838,9 @@ macro_rules! gen_arch_isa_settings {
             #[doc="8.1 requires this feature.[47]"]
             #[doc="```"]
             #[doc=""]
-            #[doc="this puts reintroduction of these instructions somewhere in the middle of prescott and k8"]
-            #[doc="lifecycles, for intel and amd respectively. because there is no specific uarch where these"]
-            #[doc="features become enabled, prescott and k8 default to not supporting these instructions,"]
+            #[doc="this puts reintroduction of these instructions somewhere in the middle of Prescott and K8"]
+            #[doc="lifecycles, for Intel and AMD respectively. because there is no specific uarch where these"]
+            #[doc="features become enabled, Prescott and K8 default to not supporting these instructions,"]
             #[doc="where later uarches support these instructions."]
             lahfsahf, with_lahfsahf = 38;
             lzcnt, with_lzcnt = 39;
@@ -896,13 +896,53 @@ macro_rules! gen_arch_isa_settings {
             #[doc="supported in Zen 5, but not mentioned in the AMD APM as of revision 3.36."]
             enqcmd, with_enqcmd = 76;
 
+            amx, with_amx = 77;
+            amx_bf16, with_amx_bf16 = 78;
+            amx_tile, with_amx_tile = 79;
+            amx_int8, with_amx_int8 = 80;
+            amx_fp16, with_amx_fp16 = 81;
+            amx_ifma, with_amx_ifma = 82;
+            amx_ne_convert, with_amx_ne_convert = 83;
+            amx_vnni_int8, with_amx_vnni_int8 = 84;
+            amx_complex, with_amx_complex = 84;
+            amx_vnni_int16, with_amx_vnni_int16 = 84;
+            amx_movrs, with_avx_movrs = 85;
+            amx_fp8, with_amx_fp8 = 86;
+            amx_tf32, with_amx_tf32 = 87;
+
+            sm3, with_sm3 = 90;
+            sm4, with_sm4 = 91;
+            sm4_evex, with_sm4_evex = 92;
+
+            apx, with_apx = 99;
+            // no avx10 top-level bit because avx10.1 is a rollup of many avx512 extensions to
+            // date. avx10.2 and later will have bits for their additions plus similar top-level
+            // avx10_2, avx10_3, ... as appropriate.
+            fred, with_fred = 101;
+            urdmsr, with_uwrmsr = 101;
+            // avx10_2
+            /// immediate encodings for `rdmsr` and `wrmsrns`
+            immediate_rdmsr, with_immediate_rdmsr = 102;
+            /// `movrs` and the `prefetchrst2`
+            movrs, with_movrs = 103;
+
+            avx512_fp16, with_avx512_fp16 = 104;
+            avx512_vaes, with_avx512_vaes = 105;
+            avx512_gfni, with_avx512_gfni = 106;
+            avx512_vpclmulqdq, with_avx512_vpclmulqdq = 107;
+            avx512_bf16, with_avx512_bf16 = 108;
+            avx512_vnni, with_avx512_vnni = 109;
+            avx512_ifma, with_avx512_ifma = 110;
+
             {
                 sse4 = {
                     sse4_1,
                     sse4_2,
                 }
 
-                #[doc = "returns `true` if this `InstDecoder` has **all** `avx512` features enabled."]
+                /// returns `true` if this `InstDecoder` has **all** `avx512` features enabled.
+                /// this does not correspond to any particular processor architecture that has ever
+                /// been shipped.
                 avx512 = {
                     avx512_4fmaps,
                     avx512_4vnniw,
@@ -919,6 +959,27 @@ macro_rules! gen_arch_isa_settings {
                     avx512_vl,
                     avx512_vpopcntdq,
                 },
+
+                /// returns `true` if this `InstDecoder` has all extensions since defined as part
+                /// of AVX10.1. this is consistent with AVX10.1 as defined in Granite Rapids and
+                /// later.
+                avx10_1 = {
+                    avx512_fp16,
+                    avx512_vpopcntdq,
+                    avx512_vbmi2,
+                    avx512_vaes,
+                    avx512_gfni,
+                    avx512_vpclmulqdq,
+                    avx512_bitalg,
+                    avx512_bf16,
+                    avx512_vnni,
+                    avx512_vbmi,
+                    avx512_ifma,
+                    avx512_f,
+                    avx512_cd,
+                    avx512_bw,
+                    avx512_dq,
+                }
             }
 
             {
@@ -942,6 +1003,26 @@ macro_rules! gen_arch_isa_settings {
                     with_avx512_vbmi2,
                     with_avx512_vl,
                     with_avx512_vpopcntdq,
+                }
+
+                /// controls support for decoding all extensions since defined as part of AVX10.1.
+                /// this is consistent with AVX10.1 as defined in Granite Rapids and later.
+                with_avx10_1 = {
+                    with_avx512_fp16,
+                    with_avx512_vpopcntdq,
+                    with_avx512_vbmi2,
+                    with_avx512_vaes,
+                    with_avx512_gfni,
+                    with_avx512_vpclmulqdq,
+                    with_avx512_bitalg,
+                    with_avx512_bf16,
+                    with_avx512_vnni,
+                    with_avx512_vbmi,
+                    with_avx512_ifma,
+                    with_avx512_f,
+                    with_avx512_cd,
+                    with_avx512_bw,
+                    with_avx512_dq,
                 }
             }
         );

@@ -418,9 +418,11 @@ pub enum Operand {
     MemDeref { base: RegSpec },
     /// a dereference of the address held in some register with offset. for example: `[rsi + 0x14]`.
     Disp { base: RegSpec, disp: i32 },
-    /// a dereference of the address held in some register scaled by 1, 2, 4, or 8. this is almost always used with the `lea` instruction. for example: `[rdx * 4]`.
+    /// a dereference of the address held in some register scaled by 1, 2, 4, or 8. this is almost
+    /// always used with the `lea` instruction. for example: `[rdx * 4]`.
     MemIndexScale { index: RegSpec, scale: u8 },
-    /// a dereference of the address held in some register scaled by 1, 2, 4, or 8 with offset. this is almost always used with the `lea` instruction. for example: `[rax * 4 + 0x30]`.
+    /// a dereference of the address held in some register scaled by 1, 2, 4, or 8 with offset.
+    /// this is almost always used with the `lea` instruction. for example: `[rax * 4 + 0x30]`.
     MemIndexScaleDisp { index: RegSpec, scale: u8, disp: i32 },
     /// a dereference of the address from summing a register and index register scaled by 1, 2, 4,
     /// or 8. for
