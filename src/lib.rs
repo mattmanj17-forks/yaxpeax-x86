@@ -131,6 +131,14 @@ extern crate alloc;
 #[macro_use]
 mod isa_settings;
 
+// you'd hope that if Arch: yaxpeax_arch::Arch you could write Arch::Address and only mention the
+// trait if there were ambiguous definitions of Address on different traits. unfortunately:
+// https://github.com/rust-lang/rust/issues/38078
+//
+// these should probably go over to yaxpeax_arch 'cause they show up everywhere.
+type Address<Arch> = <Arch as yaxpeax_arch::Arch>::Address;
+type Word<Arch> = <Arch as yaxpeax_arch::Arch>::Word;
+
 pub mod long_mode;
 pub use long_mode as amd64;
 pub use long_mode::Arch as x86_64;

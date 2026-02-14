@@ -5,6 +5,7 @@ mod display;
 pub mod uarch;
 
 pub use crate::MemoryAccessSize;
+use crate::{Address, Word};
 
 #[cfg(feature = "fmt")]
 pub use self::display::{DisplayStyle, InstructionDisplayer};
@@ -2756,13 +2757,13 @@ impl Default for InstDecoder {
 }
 
 impl Decoder<Arch> for InstDecoder {
-    fn decode<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>>(&self, words: &mut T) -> Result<Instruction, <Arch as yaxpeax_arch::Arch>::DecodeError> {
+    fn decode<T: Reader<Address<Arch>, Word<Arch>>>(&self, words: &mut T) -> Result<Instruction, <Arch as yaxpeax_arch::Arch>::DecodeError> {
         let mut instr = Instruction::invalid();
         self.decode_into(&mut instr, words)?;
 
         Ok(instr)
     }
-    fn decode_into<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>>(&self, instr: &mut Instruction, words: &mut T) -> Result<(), <Arch as yaxpeax_arch::Arch>::DecodeError> {
+    fn decode_into<T: Reader<Address<Arch>, Word<Arch>>>(&self, instr: &mut Instruction, words: &mut T) -> Result<(), <Arch as yaxpeax_arch::Arch>::DecodeError> {
         self.decode_with_annotation(instr, words, &mut NullSink)
     }
 }
@@ -2771,7 +2772,7 @@ impl AnnotatingDecoder<Arch> for InstDecoder {
     type FieldDescription = FieldDescription;
 
     fn decode_with_annotation<
-        T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+        T: Reader<Address<Arch>, Word<Arch>>,
         S: DescriptionSink<Self::FieldDescription>
     >(&self, instr: &mut Instruction, words: &mut T, sink: &mut S) -> Result<(), <Arch as yaxpeax_arch::Arch>::DecodeError> {
         decode_with_annotation(self, instr, words, sink)
@@ -2780,7 +2781,7 @@ impl AnnotatingDecoder<Arch> for InstDecoder {
 
 #[inline(always)]
 fn decode_with_annotation<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>
 >(decoder: &InstDecoder, instr: &mut Instruction, words: &mut T, sink: &mut S) -> Result<(), <Arch as yaxpeax_arch::Arch>::DecodeError> {
     DecodeCtx::new().read_with_annotations(decoder, words, instr, sink)?;
@@ -4585,7 +4586,7 @@ const OPCODES: [OpcodeRecord; 256] = [
 #[cfg_attr(feature="profiling", inline(never))]
 #[cfg_attr(not(feature="profiling"), inline(always))]
 pub(self) fn read_E<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, instr: &mut Instruction, modrm: u8, bank: RegisterBank, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     if modrm >= 0b11000000 {
@@ -4596,7 +4597,7 @@ pub(self) fn read_E<
 }
 #[allow(non_snake_case)]
 pub(self) fn read_E_st<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, instr: &mut Instruction, modrm: u8, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     if modrm >= 0b11000000 {
@@ -4608,7 +4609,7 @@ pub(self) fn read_E_st<
 }
 #[allow(non_snake_case)]
 pub(self) fn read_E_xmm<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, instr: &mut Instruction, modrm: u8, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     if modrm >= 0b11000000 {
@@ -4619,7 +4620,7 @@ pub(self) fn read_E_xmm<
 }
 #[allow(non_snake_case)]
 pub(self) fn read_E_ymm<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, instr: &mut Instruction, modrm: u8, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     if modrm >= 0b11000000 {
@@ -4630,7 +4631,7 @@ pub(self) fn read_E_ymm<
 }
 #[allow(non_snake_case)]
 pub(self) fn read_E_vex<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, instr: &mut Instruction, modrm: u8, bank: RegisterBank, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     if modrm >= 0b11000000 {
@@ -4647,7 +4648,7 @@ pub(self) fn read_E_vex<
 #[allow(non_snake_case)]
 #[inline(always)]
 fn read_modrm_reg<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(instr: &mut Instruction, words: &mut T, modrm: u8, reg_bank: RegisterBank, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     instr.regs[1] = RegSpec::from_parts(modrm & 7, reg_bank);
@@ -4662,7 +4663,7 @@ fn read_modrm_reg<
 
 #[inline(always)]
 fn read_sib_disp<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(instr: &Instruction, words: &mut T, modrm: u8, sibbyte: u8, sink: &mut S) -> Result<i32, DecodeError> {
     let sib_start = words.offset() as u32 * 8 - 8;
@@ -4709,7 +4710,7 @@ fn read_sib_disp<
 #[allow(non_snake_case)]
 #[inline(always)]
 fn read_sib<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>
 >(words: &mut T, instr: &mut Instruction, modrm: u8, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     let modrm_start = words.offset() as u32 * 8 - 8;
@@ -4890,7 +4891,7 @@ fn read_sib<
 
 #[allow(non_snake_case)]
 fn read_M_16bit<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>
 >(words: &mut T, instr: &mut Instruction, modrm: u8, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     let modrm_start = words.offset() as u32 * 8 - 8;
@@ -5056,7 +5057,7 @@ fn read_M_16bit<
 
 #[allow(non_snake_case)]
 fn read_M<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>
 >(words: &mut T, instr: &mut Instruction, modrm: u8, sink: &mut S) -> Result<OperandSpec, DecodeError> {
     let modrm_start = words.offset() as u32 * 8 - 8;
@@ -5281,7 +5282,7 @@ impl fmt::Display for FieldDescription {
 
 #[inline(always)]
 fn record_opcode_record_found<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, sink: &mut S, opc: Opcode, code: OperandCode, opc_length: u32) {
     let offset = words.offset() as u32;
@@ -5323,7 +5324,7 @@ impl DecodeCtx {
 
 #[cfg_attr(feature="profiling", inline(never))]
 fn read_opc_hotpath<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(&mut self, mut b: u8, nextb: &mut u8, record: &mut OpcodeRecord, words: &mut T, instruction: &mut Instruction, sink: &mut S) -> Result<bool, DecodeError> {
     if b == 0x66 {
@@ -5375,7 +5376,7 @@ fn read_opc_hotpath<
 #[cfg_attr(feature="profiling", inline(never))]
 #[cfg_attr(not(feature="profiling"), inline(always))]
 fn read_with_annotations<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(&mut self, decoder: &InstDecoder, words: &mut T, instruction: &mut Instruction, sink: &mut S) -> Result<(), DecodeError> {
     words.mark();
@@ -5537,7 +5538,7 @@ fn read_with_annotations<
 #[cfg_attr(feature="profiling", inline(never))]
 #[cfg_attr(not(feature="profiling"), inline(always))]
 fn read_operands<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>
 >(&mut self, decoder: &InstDecoder, words: &mut T, instruction: &mut Instruction, operand_code: OperandCode, sink: &mut S) -> Result<(), DecodeError> {
     sink.record(
@@ -9071,7 +9072,7 @@ fn read_0f3a_opcode(&mut self, opcode: u8, prefixes: &mut Prefixes) -> OpcodeRec
 }
 
 fn decode_x87<
-    T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>,
+    T: Reader<Address<Arch>, Word<Arch>>,
     S: DescriptionSink<FieldDescription>,
 >(words: &mut T, instruction: &mut Instruction, operand_code: OperandCase, sink: &mut S) -> Result<(), DecodeError> {
     sink.record(
@@ -9599,7 +9600,7 @@ fn decode_x87<
     Ok(())
 }
 #[inline]
-fn read_num<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>>(bytes: &mut T, width: u8) -> Result<u32, DecodeError> {
+fn read_num<T: Reader<Address<Arch>, Word<Arch>>>(bytes: &mut T, width: u8) -> Result<u32, DecodeError> {
     match width {
         1 => { bytes.next().ok().ok_or(DecodeError::ExhaustedInput).map(|x| x as u32) }
         2 => {
@@ -9619,7 +9620,7 @@ fn read_num<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_ar
 }
 
 #[inline]
-fn read_imm_signed<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>>(bytes: &mut T, num_width: u8) -> Result<i32, DecodeError> {
+fn read_imm_signed<T: Reader<Address<Arch>, Word<Arch>>>(bytes: &mut T, num_width: u8) -> Result<i32, DecodeError> {
     if num_width == 1 {
         Ok(read_num(bytes, 1)? as i8 as i32)
     } else if num_width == 2 {
@@ -9630,12 +9631,12 @@ fn read_imm_signed<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yax
 }
 
 #[inline]
-fn read_imm_unsigned<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>>(bytes: &mut T, width: u8) -> Result<u32, DecodeError> {
+fn read_imm_unsigned<T: Reader<Address<Arch>, Word<Arch>>>(bytes: &mut T, width: u8) -> Result<u32, DecodeError> {
     read_num(bytes, width)
 }
 
 #[inline]
-fn read_modrm<T: Reader<<Arch as yaxpeax_arch::Arch>::Address, <Arch as yaxpeax_arch::Arch>::Word>>(words: &mut T) -> Result<u8, DecodeError> {
+fn read_modrm<T: Reader<Address<Arch>, Word<Arch>>>(words: &mut T) -> Result<u8, DecodeError> {
     words.next().ok().ok_or(DecodeError::ExhaustedInput)
 }
 
