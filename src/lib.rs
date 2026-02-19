@@ -128,6 +128,11 @@ extern crate serde;
 #[cfg(feature="std")]
 extern crate alloc;
 
+#[cfg(feature="behavior")]
+mod behavior;
+#[cfg(feature="behavior")]
+pub use behavior::{Access, Exception, ExceptionInfo, PrivilegeLevel};
+
 #[macro_use]
 mod isa_settings;
 

@@ -3,6 +3,8 @@ mod evex;
 #[cfg(feature = "fmt")]
 mod display;
 pub mod uarch;
+#[cfg(feature = "behavior")]
+pub mod behavior;
 
 pub use crate::MemoryAccessSize;
 use crate::{Address, Word};
@@ -302,6 +304,13 @@ impl RegSpec {
         spl => 4, bpl => 5, sil => 6, dil => 7,
         r8b => 8, r9b => 9, r10b => 10, r11b => 11,
         r12b => 12, r13b => 13, r14b => 14, r15b => 15
+    );
+
+    register!(CR,
+        cr0 => 0, cr1 => 1, cr2 => 2, cr3 => 3,
+        cr4 => 4, cr5 => 5, cr6 => 6, cr7 => 7,
+        cr8 => 8, cr9 => 9, cr10 => 10, cr11 => 11,
+        cr12 => 12, cr13 => 13, cr14 => 14, cr15 => 15
     );
 
     #[inline]
@@ -1088,6 +1097,7 @@ const XSAVE: [Opcode; 10] = [
 /// an `x86_64` opcode. there sure are a lot of these.
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "_debug_internal_asserts", derive(strum::EnumCount))]
 #[non_exhaustive]
 #[repr(u32)]
 pub enum Opcode {
@@ -1190,8 +1200,11 @@ pub enum Opcode {
     LEA,
     NOP,
     PREFETCHNTA,
+    /// this variant was named incorrectly and will change to `PREFETCHT0` in the future.
     PREFETCH0,
+    /// this variant was named incorrectly and will change to `PREFETCHT1` in the future.
     PREFETCH1,
+    /// this variant was named incorrectly and will change to `PREFETCHT2` in the future.
     PREFETCH2,
 //    XCHG,
     POPF,
@@ -2980,7 +2993,7 @@ impl Opcode {
     }
 
     /// get the [`ConditionCode`] for this instruction, if it is in fact conditional. x86's
-    /// conditional instructions are `Jcc`, `CMOVcc`, andd `SETcc`.
+    /// conditional instructions are `Jcc`, `CMOVcc`, and `SETcc`.
     pub fn condition(&self) -> Option<ConditionCode> {
         match self {
             Opcode::JO |
