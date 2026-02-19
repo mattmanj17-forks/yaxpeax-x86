@@ -182,7 +182,7 @@ pub mod amd {
             .with_avx512_vl()
             .with_avx512_bw()
             .with_avx512_cd()
-            .with_avx512_cd()
+            .with_avx512_vl()
             .with_avx512_vbmi()
             .with_avx512_vbmi2()
             .with_avx512_vpopcntdq()
@@ -195,6 +195,16 @@ pub mod amd {
         zen4()
             .with_movdir64b()
             .with_enqcmd()
+            .with_avx512_dq()
+            .with_avx512_fma()
+            .with_avx512_bw()
+            .with_avx512_vnni()
+            .with_avx512_bitalg()
+            /*
+             * one would imagine the following as well, but there are not features yet:
+             * .with_avx512_vpopcntdq()
+             * .with_avx512_bf16()
+             */
     }
 }
 
