@@ -409,6 +409,9 @@ impl OperandSpec {
     fn is_memory(&self) -> bool {
         (*self as u8) & 0x80 != 0
     }
+    fn is_masked(&self) -> bool {
+        (*self as u8) & 0x40 != 0
+    }
 }
 /// an `avx512` merging mode.
 ///
@@ -6482,8 +6485,15 @@ fn read_operands<
                 instruction.mem_size = 2;
             } else if instruction.opcode == Opcode::RETF {
                 instruction.mem_size = 4;
+            } else if instruction.opcode == Opcode::POPF {
+                instruction.mem_size = 2;
+            } else if instruction.opcode == Opcode::PUSHF {
+                instruction.mem_size = 2;
+            } else if instruction.opcode == Opcode::LEAVE {
+                instruction.mem_size = 2;
+            } else if instruction.opcode == Opcode::XLAT {
+                instruction.mem_size = 1;
             }
-            // TODO: leave?
             instruction.operands[0] = OperandSpec::Nothing;
             instruction.operand_count = 0;
             return Ok(());
@@ -7032,6 +7042,8 @@ fn read_operands<
             instruction.imm = read_num(words, 1)? as u32;
             instruction.operands[0] = OperandSpec::ImmInDispField;
             instruction.operands[1] = OperandSpec::ImmU8;
+            // because there is an implied push of the adjusted base pointer
+            instruction.mem_size = 2;
             instruction.operand_count = 2;
         }
         OperandCase::Fw => {

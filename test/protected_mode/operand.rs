@@ -47,4 +47,12 @@ fn test_implied_memory_width() {
     // two bytes.
     assert_eq!(mem_size_of(&[0x66, 0xff, 0x10]), Some(2));
     assert_eq!(mem_size_of(&[0x66, 0xff, 0x20]), Some(2));
+    // pushf
+    assert_eq!(mem_size_of(&[0x9c]), Some(4));
+    // popf
+    assert_eq!(mem_size_of(&[0x9d]), Some(4));
+    // leave
+    assert_eq!(mem_size_of(&[0xc9]), Some(4));
+    // xlat
+    assert_eq!(mem_size_of(&[0xd7]), Some(1));
 }
