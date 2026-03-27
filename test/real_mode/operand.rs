@@ -28,4 +28,12 @@ fn test_implied_memory_width() {
     assert_eq!(mem_size_of(&[0xc9]), Some(2));
     // xlat
     assert_eq!(mem_size_of(&[0xd7]), Some(1));
+    // push fs
+    assert_eq!(mem_size_of(&[0x0f, 0xa0]), Some(2));
+    // pop fs
+    assert_eq!(mem_size_of(&[0x0f, 0xa1]), Some(2));
+    // push gs
+    assert_eq!(mem_size_of(&[0x0f, 0xa8]), Some(2));
+    // pop gs
+    assert_eq!(mem_size_of(&[0x0f, 0xa9]), Some(2));
 }
