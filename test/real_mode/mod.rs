@@ -16981,8 +16981,14 @@ fn test_real_mode() {
     test_display(&[0x8b, 0x4c, 0x10], "mov cx, word [si + 0x10]");
     test_display(&[0x8d, 0x53, 0x08], "lea dx, word [bp + di * 1 + 0x8]");
     test_display(&[0x8e, 0x00], "mov es, word [bx + si * 1]");
+    test_display(&[0x8e, 0xc0], "mov es, ax");
+    test_display(&[0x8c, 0xc0], "mov ax, es");
     test_display(&[0x8e, 0x10], "mov ss, word [bx + si * 1]");
+    test_display(&[0x8e, 0xd0], "mov ss, ax");
+    test_display(&[0x8c, 0xd0], "mov ax, ss");
     test_display(&[0x8e, 0x18], "mov ds, word [bx + si * 1]");
+    test_display(&[0x8e, 0xd8], "mov ds, ax");
+    test_display(&[0x8c, 0xd8], "mov ax, ds");
     test_display(&[0x8e, 0x20], "mov fs, word [bx + si * 1]");
     test_display(&[0x8e, 0x28], "mov gs, word [bx + si * 1]");
     test_display(&[0x8f, 0x00], "pop word [bx + si * 1]");
