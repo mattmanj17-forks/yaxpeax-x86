@@ -8042,7 +8042,7 @@ fn read_operands<
                 } else {
                     instruction.opcode = Opcode::SGDT;
                     instruction.operand_count = 1;
-                    instruction.mem_size = 63;
+                    instruction.mem_size = 6;
                     instruction.operands[0] = read_E(words, instruction, modrm, bank, sink)?;
                 }
             } else if r == 1 {
@@ -8097,7 +8097,11 @@ fn read_operands<
                 } else {
                     instruction.opcode = Opcode::SIDT;
                     instruction.operand_count = 1;
-                    instruction.mem_size = 63;
+                    // quoth SDM:
+                    // > In non-64-bit modes, the 16-bit limit field of the register is stored in
+                    // > the low 2 bytes of the memory location and the 32-bit base address is
+                    // > stored in the high 4 bytes.
+                    instruction.mem_size = 6;
                     instruction.operands[0] = read_E(words, instruction, modrm, bank, sink)?;
                 }
             } else if r == 2 {
@@ -8136,7 +8140,10 @@ fn read_operands<
                 } else {
                     instruction.opcode = Opcode::LGDT;
                     instruction.operand_count = 1;
-                    instruction.mem_size = 63;
+                    // quoth SDM:
+                    // > In legacy or compatibility mode, the destination operand is a 6-byte
+                    // > memory location.
+                    instruction.mem_size = 6;
                     instruction.operands[0] = read_E(words, instruction, modrm, bank, sink)?;
                 }
             } else if r == 3 {
@@ -8200,7 +8207,7 @@ fn read_operands<
                 } else {
                     instruction.opcode = Opcode::LIDT;
                     instruction.operand_count = 1;
-                    instruction.mem_size = 63;
+                    instruction.mem_size = 6;
                     instruction.operands[0] = read_E(words, instruction, modrm, bank, sink)?;
                 }
             } else if r == 4 {
