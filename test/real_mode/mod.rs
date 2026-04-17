@@ -170,6 +170,8 @@ fn test_real_mode() {
     test_display(&[0x0f, 0x06], "clts");
     test_display(&[0x0f, 0x07], "sysret");
     test_display(&[0x0f, 0x0d, 0x08], "prefetchw zmmword [bx + si * 1]");
+    test_display(&[0x0f, 0x0d, 0x00], "nop zmmword [bx + si * 1]");
+    test_invalid(&[0x0f, 0x0d, 0xc0]);
     test_display(&[0x0f, 0x0f, 0x38, 0x8e], "pfpnacc mm7, qword [bx + si * 1]");
     test_display(&[0x0f, 0x0f, 0xc6, 0xb7], "pmulhrw mm0, mm6");
     test_display(&[0x0f, 0x0f, 0xe0, 0x8a], "pfnacc mm4, mm0");

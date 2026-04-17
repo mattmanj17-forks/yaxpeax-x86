@@ -7087,12 +7087,6 @@ fn read_operands<
         OperandCase::ModRM_0x0f0d => {
             let r = instruction.regs[0].num & 0b111;
 
-            let bank = if instruction.prefixes.operand_size() {
-                RegisterBank::W
-            } else {
-                RegisterBank::D
-            };
-
             match r {
                 1 => {
                     instruction.opcode = Opcode::PREFETCHW;
@@ -7101,12 +7095,14 @@ fn read_operands<
                     instruction.opcode = Opcode::NOP;
                 }
             }
-            instruction.operands[0] = mem_oper;
-            if instruction.operands[0] != OperandSpec::RegMMM {
-                instruction.mem_size = 64;
-            } else {
-                instruction.regs[1].bank = bank;
+            if mem_oper == OperandSpec::RegMMM {
+                // *found* this from running `0f0dc0` under KVM on a Zen 5 system. this is
+                // consistent with the register number being used to pick kinds of prefetch.
+                return Err(DecodeError::InvalidOperand);
             }
+
+            instruction.operands[0] = mem_oper;
+            instruction.mem_size = 64;
             instruction.operand_count = 1;
         }
         OperandCase::ModRM_0x0f0f => {
