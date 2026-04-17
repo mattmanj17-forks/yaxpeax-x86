@@ -36,4 +36,12 @@ fn test_implied_memory_width() {
     assert_eq!(mem_size_of(&[0x0f, 0xa8]), Some(2));
     // pop gs
     assert_eq!(mem_size_of(&[0x0f, 0xa9]), Some(2));
+
+    // "maskmovq mm0, mm1"
+    assert_eq!(mem_size_of(&[0x0f, 0xf7, 0xc1]), Some(8));
+    assert_eq!(mem_size_of(&[0x67, 0x0f, 0xf7, 0xc1]), Some(8));
+
+    // "maskmovdqu xmm0, xmm1"
+    assert_eq!(mem_size_of(&[0x66, 0x0f, 0xf7, 0xc1]), Some(16));
+    assert_eq!(mem_size_of(&[0x67, 0x66, 0x0f, 0xf7, 0xc1]), Some(16));
 }
