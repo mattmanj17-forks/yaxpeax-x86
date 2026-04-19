@@ -8083,6 +8083,7 @@ fn read_operands<
                         match m {
                             0b000 => {
                                 instruction.opcode = Opcode::MONITOR;
+                                instruction.mem_size = 1;
                             }
                             0b001 => {
                                 instruction.opcode = Opcode::MWAIT;
