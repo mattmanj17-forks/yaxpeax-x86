@@ -33,6 +33,10 @@ fn memory_widths() {
     // "maskmovdqu xmm0, xmm1"
     assert_eq!(mem_size_of(&[0x66, 0x0f, 0xf7, 0xc1]).size_name(), "xmmword");
     assert_eq!(mem_size_of(&[0x67, 0x66, 0x0f, 0xf7, 0xc1]).size_name(), "xmmword");
+
+    // "vmaskmovdqu xmm0, xmm1"
+    assert_eq!(mem_size_of(&[0xc4, 0xe1, 0x79, 0xf7, 0xc1]).size_name(), "xmmword");
+    assert_eq!(mem_size_of(&[0x67, 0xc4, 0xe1, 0x79, 0xf7, 0xc1]).size_name(), "xmmword");
 }
 
 #[test]

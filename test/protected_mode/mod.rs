@@ -2138,6 +2138,8 @@ fn test_vex() {
     test_avx2(&[0xc4, 0b110_00001, 0b1_1111_101, 0x6d, 0b11_001_010], "vpunpckhqdq ymm1, ymm0, ymm2");
     test_instr(&[0xc4, 0b110_00001, 0b1_1111_001, 0x6e, 0b11_001_010], "vmovd xmm1, edx");
     test_instr(&[0xc4, 0b110_00001, 0b1_1111_001, 0x6e, 0b00_001_010], "vmovd xmm1, dword [edx]");
+    test_instr(&[0xc4, 0b110_00001, 0b1_1111_001, 0xd6, 0b00_001_010], "vmovq qword [edx], xmm1");
+    test_instr(&[0xc4, 0b110_00001, 0b1_1111_001, 0xd6, 0b11_001_010], "vmovq xmm2, xmm1");
     test_invalid(&[0xc4, 0b110_00001, 0b1_1111_101, 0x6e, 0b11_001_010]);
     test_instr(&[0xc4, 0b110_00001, 0b0_1111_001, 0x6f, 0b11_001_010], "vmovdqa xmm1, xmm2");
     test_instr(&[0xc4, 0b110_00001, 0b0_1111_101, 0x6f, 0b11_001_010], "vmovdqa ymm1, ymm2");
