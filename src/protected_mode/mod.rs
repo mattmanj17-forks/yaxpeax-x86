@@ -3940,6 +3940,7 @@ enum OperandCase {
     PMOVX_G_E_xmm,
     PMOVX_E_G_xmm,
     G_Ev_xmm_Ib,
+    Ev_G_xmm_Ib,
     G_E_mm_Ib,
     AbsFar,
     MOVDIR64B,
@@ -4284,6 +4285,7 @@ enum OperandCode {
     PMOVX_G_E_xmm = OperandCodeBuilder::new().read_E().operand_case(OperandCase::PMOVX_G_E_xmm).bits(),
     PMOVX_E_G_xmm = OperandCodeBuilder::new().read_E().operand_case(OperandCase::PMOVX_E_G_xmm).bits(),
     G_Ev_xmm_Ib = OperandCodeBuilder::new().read_E().operand_case(OperandCase::G_Ev_xmm_Ib).bits(),
+    Ev_G_xmm_Ib = OperandCodeBuilder::new().read_E().operand_case(OperandCase::Ev_G_xmm_Ib).bits(),
     G_E_mm_Ib = OperandCodeBuilder::new().read_E().operand_case(OperandCase::G_E_mm_Ib).bits(),
     AbsFar = OperandCodeBuilder::new().operand_case(OperandCase::AbsFar).bits(),
     ModRM_0xc4 = OperandCodeBuilder::new().operand_case(OperandCase::ModRM_0xc4).bits(),
@@ -6531,8 +6533,9 @@ fn read_operands<
             instruction.operands[2] = OperandSpec::ImmI8;
             instruction.operand_count = 3;
         }
-        OperandCase::G_Ev_xmm_Ib => {
-            instruction.operands[1] = mem_oper;
+        OperandCase::Ev_G_xmm_Ib => {
+            instruction.operands[1] = instruction.operands[0];
+            instruction.operands[0] = mem_oper;
             instruction.regs[0].bank = RegisterBank::X;
             instruction.imm =
                 read_num(words, 1)? as u8 as u32;
@@ -6542,6 +6545,21 @@ fn read_operands<
                     Opcode::PEXTRW => 2,
                     Opcode::PEXTRD => 4,
                     Opcode::EXTRACTPS => 4,
+                    _ => 8,
+                };
+            } else {
+                instruction.regs[1].bank = RegisterBank::X;
+            }
+            instruction.operands[2] = OperandSpec::ImmI8;
+            instruction.operand_count = 3;
+        }
+        OperandCase::G_Ev_xmm_Ib => {
+            instruction.operands[1] = mem_oper;
+            instruction.regs[0].bank = RegisterBank::X;
+            instruction.imm =
+                read_num(words, 1)? as u8 as u32;
+            if instruction.operands[1] != OperandSpec::RegMMM {
+                instruction.mem_size = match instruction.opcode {
                     Opcode::INSERTPS => 4,
                     Opcode::PINSRB => 1,
                     Opcode::PINSRW => 2,
@@ -9152,10 +9170,10 @@ fn read_0f3a_opcode(&mut self, opcode: u8, prefixes: &mut Prefixes) -> OpcodeRec
             0x0d => OpcodeRecord::new(Interpretation::Instruction(Opcode::BLENDPD), OperandCode::G_E_xmm_Ib),
             0x0e => OpcodeRecord::new(Interpretation::Instruction(Opcode::PBLENDW), OperandCode::G_E_xmm_Ib),
             0x0f => OpcodeRecord::new(Interpretation::Instruction(Opcode::PALIGNR), OperandCode::G_E_xmm_Ib),
-            0x14 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PEXTRB), OperandCode::G_Ev_xmm_Ib),
-            0x15 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PEXTRW), OperandCode::G_Ev_xmm_Ib),
-            0x16 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PEXTRD), OperandCode::G_Ev_xmm_Ib),
-            0x17 => OpcodeRecord::new(Interpretation::Instruction(Opcode::EXTRACTPS), OperandCode::G_Ev_xmm_Ib),
+            0x14 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PEXTRB), OperandCode::Ev_G_xmm_Ib),
+            0x15 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PEXTRW), OperandCode::Ev_G_xmm_Ib),
+            0x16 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PEXTRD), OperandCode::Ev_G_xmm_Ib),
+            0x17 => OpcodeRecord::new(Interpretation::Instruction(Opcode::EXTRACTPS), OperandCode::Ev_G_xmm_Ib),
             0x20 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PINSRB), OperandCode::G_Ev_xmm_Ib),
             0x21 => OpcodeRecord::new(Interpretation::Instruction(Opcode::INSERTPS), OperandCode::G_Ev_xmm_Ib),
             0x22 => OpcodeRecord::new(Interpretation::Instruction(Opcode::PINSRD), OperandCode::G_Ev_xmm_Ib),
