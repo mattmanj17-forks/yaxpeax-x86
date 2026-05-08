@@ -118,7 +118,9 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x0d, 0x11, 0xca], "vmovups xmm2{k5}, xmm1"); // VMOVUPS_XMMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x11, 0x0a], "vmovups xmmword [rdx], xmm1"); // VMOVUPS_MEMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x0d, 0x11, 0x0a], "vmovups xmmword [rdx]{k5}, xmm1"); // VMOVUPS_MEMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x8d, 0x11, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x12, 0xca], "vmovhlps xmm1, xmm0, xmm2"); // VMOVHLPS_XMMf32_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x18, 0x12, 0xca]); // no broadcast
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x12, 0x0a], "vmovlps xmm1, xmm0, qword [rdx]"); // VMOVLPS_XMMf32_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x13, 0x0a], "vmovlps qword [rdx], xmm1"); // VMOVLPS_MEMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xbd, 0x14, 0x0a], "vunpcklps ymm1{k5}{z}, ymm0, dword [rdx]{1to8}"); // VUNPCKLPS_YMMf32_MASKmskw_YMMf32_MEMf32_AVX512, extension: AVX512EVEX
@@ -176,10 +178,12 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x15, 0x0a], "vunpckhps xmm1, xmm0, xmmword [rdx]"); // VUNPCKHPS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x0d, 0x15, 0x0a], "vunpckhps xmm1{k5}, xmm0, xmmword [rdx]"); // VUNPCKHPS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x16, 0xca], "vmovlhps xmm1, xmm0, xmm2"); // VMOVLHPS_XMMf32_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x18, 0x16, 0xca]); //
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x16, 0x0a], "vmovhps xmm1, xmm0, qword [rdx]"); // VMOVHPS_XMMf32_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x17, 0x0a], "vmovhps qword [rdx], xmm1"); // VMOVHPS_MEMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xad, 0x28, 0xca], "vmovaps ymm1{k5}{z}, ymm2"); // VMOVAPS_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xad, 0x28, 0x0a], "vmovaps ymm1{k5}{z}, ymmword [rdx]"); // VMOVAPS_YMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0xbd, 0x28, 0x0a]); // no broadcast
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x28, 0xca], "vmovaps ymm1, ymm2"); // VMOVAPS_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x2d, 0x28, 0xca], "vmovaps ymm1{k5}, ymm2"); // VMOVAPS_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x28, 0x0a], "vmovaps ymm1, ymmword [rdx]"); // VMOVAPS_YMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
@@ -207,6 +211,7 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x48, 0x29, 0x0a], "vmovaps zmmword [rdx], zmm1"); // VMOVAPS_MEMf32_MASKmskw_ZMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x4d, 0x29, 0x0a], "vmovaps zmmword [rdx]{k5}, zmm1"); // VMOVAPS_MEMf32_MASKmskw_ZMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x8d, 0x29, 0xca], "vmovaps xmm2{k5}{z}, xmm1"); // VMOVAPS_XMMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x9d, 0x29, 0xca]); // no sae/er support on movaps
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x29, 0xca], "vmovaps xmm2, xmm1"); // VMOVAPS_XMMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x0d, 0x29, 0xca], "vmovaps xmm2{k5}, xmm1"); // VMOVAPS_XMMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x29, 0x0a], "vmovaps xmmword [rdx], xmm1"); // VMOVAPS_MEMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
@@ -214,13 +219,20 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x2b, 0x0a], "vmovntps ymmword [rdx], ymm1"); // VMOVNTPS_MEMf32_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x48, 0x2b, 0x0a], "vmovntps zmmword [rdx], zmm1"); // VMOVNTPS_MEMf32_ZMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x08, 0x2b, 0x0a], "vmovntps xmmword [rdx], xmm1"); // VMOVNTPS_MEMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x38, 0x2b, 0x0a]); // no zero mask-merge
+    test_invalid(&[0x62, 0xf1, 0x7c, 0xa8, 0x2b, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0xfc, 0x28, 0x2b, 0x0a]); // no W=1
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x78, 0x2e, 0xca], "vucomiss xmm1{sae}, xmm2"); // VUCOMISS_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x2e, 0xca], "vucomiss xmm1, xmm2"); // VUCOMISS_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x2e, 0x0a], "vucomiss xmm1, dword [rdx]"); // VUCOMISS_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x18, 0x2e, 0x0a]); // no broadcast from memory
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x68, 0x2e, 0x0a]); // no L'L=11
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x88, 0x2e, 0x0a]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x78, 0x2f, 0xca], "vcomiss xmm1{sae}, xmm2"); // VCOMISS_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x2f, 0xca], "vcomiss xmm1, xmm2"); // VCOMISS_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0x2f, 0x0a], "vcomiss xmm1, dword [rdx]"); // VCOMISS_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xfd, 0x51, 0xca], "vsqrtps zmm1{k5}{z}{rz-sae}, zmm2"); // VSQRTPS_ZMMf32_MASKmskw_ZMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfc, 0xfd, 0x51, 0xca]); // requires W=0
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x78, 0x51, 0xca], "vsqrtps zmm1{rz-sae}, zmm2"); // VSQRTPS_ZMMf32_MASKmskw_ZMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x7d, 0x51, 0xca], "vsqrtps zmm1{k5}{rz-sae}, zmm2"); // VSQRTPS_ZMMf32_MASKmskw_ZMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xbd, 0x51, 0xca], "vsqrtps zmm1{k5}{z}{rd-sae}, zmm2"); // VSQRTPS_ZMMf32_MASKmskw_ZMMf32_AVX512, extension: AVX512EVEX
@@ -447,6 +459,7 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x0d, 0x59, 0x0a], "vmulps xmm1{k5}, xmm0, xmmword [rdx]"); // VMULPS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xfd, 0x5a, 0xca], "vcvtps2pd zmm1{k5}{z}{sae}, ymm2"); // VCVTPS2PD_ZMMf64_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x78, 0x5a, 0xca], "vcvtps2pd zmm1{sae}, ymm2"); // VCVTPS2PD_ZMMf64_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfc, 0x78, 0x5a, 0xca]); // W=0
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x7d, 0x5a, 0xca], "vcvtps2pd zmm1{k5}{sae}, ymm2"); // VCVTPS2PD_ZMMf64_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xbd, 0x5a, 0x0a], "vcvtps2pd ymm1{k5}{z}, dword [rdx]{1to4}"); // VCVTPS2PD_YMMf64_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x38, 0x5a, 0x0a], "vcvtps2pd ymm1, dword [rdx]{1to4}"); // VCVTPS2PD_YMMf64_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
@@ -832,6 +845,7 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x78, 0xc2, 0xca, 0xcc], "vcmpps k1{sae}, zmm0, zmm2, 0xcc"); // VCMPPS_MASKmskw_MASKmskw_ZMMf32_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x7d, 0xc2, 0xca, 0xcc], "vcmpps k1{k5}{sae}, zmm0, zmm2, 0xcc"); // VCMPPS_MASKmskw_MASKmskw_ZMMf32_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x38, 0xc2, 0x0a, 0xcc], "vcmpps k1, ymm0, dword [rdx]{1to8}, 0xcc"); // VCMPPS_MASKmskw_MASKmskw_YMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0xb8, 0xc2, 0x0a, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x3d, 0xc2, 0x0a, 0xcc], "vcmpps k1{k5}, ymm0, dword [rdx]{1to8}, 0xcc"); // VCMPPS_MASKmskw_MASKmskw_YMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x28, 0xc2, 0xca, 0xcc], "vcmpps k1, ymm0, ymm2, 0xcc"); // VCMPPS_MASKmskw_MASKmskw_YMMf32_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x2d, 0xc2, 0xca, 0xcc], "vcmpps k1{k5}, ymm0, ymm2, 0xcc"); // VCMPPS_MASKmskw_MASKmskw_YMMf32_YMMf32_IMM8_AVX512, extension: AVX512EVEX
@@ -851,6 +865,7 @@ fn tests_None_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x0d, 0xc2, 0x0a, 0xcc], "vcmpps k1{k5}, xmm0, xmmword [rdx], 0xcc"); // VCMPPS_MASKmskw_MASKmskw_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xbd, 0xc6, 0x0a, 0xcc], "vshufps ymm1{k5}{z}, ymm0, dword [rdx]{1to8}, 0xcc"); // VSHUFPS_YMMf32_MASKmskw_YMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x38, 0xc6, 0x0a, 0xcc], "vshufps ymm1, ymm0, dword [rdx]{1to8}, 0xcc"); // VSHUFPS_YMMf32_MASKmskw_YMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7c, 0x3d, 0xc6, 0xca, 0xcc]); // no broadcast from register source
     test_avx_full(&[0x62, 0xf1, 0x7c, 0x3d, 0xc6, 0x0a, 0xcc], "vshufps ymm1{k5}, ymm0, dword [rdx]{1to8}, 0xcc"); // VSHUFPS_YMMf32_MASKmskw_YMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xad, 0xc6, 0xca, 0xcc], "vshufps ymm1{k5}{z}, ymm0, ymm2, 0xcc"); // VSHUFPS_YMMf32_MASKmskw_YMMf32_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7c, 0xad, 0xc6, 0x0a, 0xcc], "vshufps ymm1{k5}{z}, ymm0, ymmword [rdx], 0xcc"); // VSHUFPS_YMMf32_MASKmskw_YMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
@@ -888,6 +903,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x2d, 0x10, 0x0a], "vmovupd ymm1{k5}, ymmword [rdx]"); // VMOVUPD_YMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xcd, 0x10, 0xca], "vmovupd zmm1{k5}{z}, zmm2"); // VMOVUPD_ZMMf64_MASKmskw_ZMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xcd, 0x10, 0x0a], "vmovupd zmm1{k5}{z}, zmmword [rdx]"); // VMOVUPD_ZMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0xdd, 0x10, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x48, 0x10, 0xca], "vmovupd zmm1, zmm2"); // VMOVUPD_ZMMf64_MASKmskw_ZMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x4d, 0x10, 0xca], "vmovupd zmm1{k5}, zmm2"); // VMOVUPD_ZMMf64_MASKmskw_ZMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x48, 0x10, 0x0a], "vmovupd zmm1, zmmword [rdx]"); // VMOVUPD_ZMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
@@ -919,6 +935,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x38, 0x14, 0x0a], "vunpcklpd ymm1, ymm0, qword [rdx]{1to4}"); // VUNPCKLPD_YMMf64_MASKmskw_YMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x3d, 0x14, 0x0a], "vunpcklpd ymm1{k5}, ymm0, qword [rdx]{1to4}"); // VUNPCKLPD_YMMf64_MASKmskw_YMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x14, 0xca], "vunpcklpd ymm1{k5}{z}, ymm0, ymm2"); // VUNPCKLPD_YMMf64_MASKmskw_YMMf64_YMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0xbd, 0x14, 0xca]); // no broadcast in reg-reg
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x14, 0x0a], "vunpcklpd ymm1{k5}{z}, ymm0, ymmword [rdx]"); // VUNPCKLPD_YMMf64_MASKmskw_YMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x14, 0xca], "vunpcklpd ymm1, ymm0, ymm2"); // VUNPCKLPD_YMMf64_MASKmskw_YMMf64_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x2d, 0x14, 0xca], "vunpcklpd ymm1{k5}, ymm0, ymm2"); // VUNPCKLPD_YMMf64_MASKmskw_YMMf64_YMMf64_AVX512, extension: AVX512EVEX
@@ -946,6 +963,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x38, 0x15, 0x0a], "vunpckhpd ymm1, ymm0, qword [rdx]{1to4}"); // VUNPCKHPD_YMMf64_MASKmskw_YMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x3d, 0x15, 0x0a], "vunpckhpd ymm1{k5}, ymm0, qword [rdx]{1to4}"); // VUNPCKHPD_YMMf64_MASKmskw_YMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x15, 0xca], "vunpckhpd ymm1{k5}{z}, ymm0, ymm2"); // VUNPCKHPD_YMMf64_MASKmskw_YMMf64_YMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0xbd, 0x15, 0xca]); // no broadcast in reg-reg
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x15, 0x0a], "vunpckhpd ymm1{k5}{z}, ymm0, ymmword [rdx]"); // VUNPCKHPD_YMMf64_MASKmskw_YMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x15, 0xca], "vunpckhpd ymm1, ymm0, ymm2"); // VUNPCKHPD_YMMf64_MASKmskw_YMMf64_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x2d, 0x15, 0xca], "vunpckhpd ymm1{k5}, ymm0, ymm2"); // VUNPCKHPD_YMMf64_MASKmskw_YMMf64_YMMf64_AVX512, extension: AVX512EVEX
@@ -976,6 +994,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x28, 0xca], "vmovapd ymm1, ymm2"); // VMOVAPD_YMMf64_MASKmskw_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x2d, 0x28, 0xca], "vmovapd ymm1{k5}, ymm2"); // VMOVAPD_YMMf64_MASKmskw_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x28, 0x0a], "vmovapd ymm1, ymmword [rdx]"); // VMOVAPD_YMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x38, 0x28, 0x0a]); // no broadcast
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x2d, 0x28, 0x0a], "vmovapd ymm1{k5}, ymmword [rdx]"); // VMOVAPD_YMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xcd, 0x28, 0xca], "vmovapd zmm1{k5}{z}, zmm2"); // VMOVAPD_ZMMf64_MASKmskw_ZMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xcd, 0x28, 0x0a], "vmovapd zmm1{k5}{z}, zmmword [rdx]"); // VMOVAPD_ZMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
@@ -1007,9 +1026,16 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x2b, 0x0a], "vmovntpd ymmword [rdx], ymm1"); // VMOVNTPD_MEMf64_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x48, 0x2b, 0x0a], "vmovntpd zmmword [rdx], zmm1"); // VMOVNTPD_MEMf64_ZMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0x2b, 0x0a], "vmovntpd xmmword [rdx], xmm1"); // VMOVNTPD_MEMf64_XMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x18, 0x2b, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x88, 0x2b, 0x0a]); // no zero mask-merge
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x08, 0x2b, 0x0a]); // no W=-
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x78, 0x2e, 0xca], "vucomisd xmm1{sae}, xmm2"); // VUCOMISD_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x79, 0x2e, 0xca]); // mask reg must be 000
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x2e, 0xca], "vucomisd xmm1, xmm2"); // VUCOMISD_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x2e, 0x0a], "vucomisd xmm1, qword [rdx]"); // VUCOMISD_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x18, 0x2e, 0x0a]); // no broadcast from memory
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x68, 0x2e, 0x0a]); // no L'L=11
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x88, 0x2e, 0x0a]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x78, 0x2f, 0xca], "vcomisd xmm1{sae}, xmm2"); // VCOMISD_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x2f, 0xca], "vcomisd xmm1, xmm2"); // VCOMISD_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x2f, 0x0a], "vcomisd xmm1, qword [rdx]"); // VCOMISD_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
@@ -1289,6 +1315,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7d, 0xad, 0x5b, 0xca], "vcvtps2dq ymm1{k5}{z}, ymm2"); // VCVTPS2DQ_YMMi32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0xad, 0x5b, 0x0a], "vcvtps2dq ymm1{k5}{z}, ymmword [rdx]"); // VCVTPS2DQ_YMMi32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x28, 0x5b, 0xca], "vcvtps2dq ymm1, ymm2"); // VCVTPS2DQ_YMMi32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x28, 0x5b, 0xca]); // no W=1
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x2d, 0x5b, 0xca], "vcvtps2dq ymm1{k5}, ymm2"); // VCVTPS2DQ_YMMi32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x28, 0x5b, 0x0a], "vcvtps2dq ymm1, ymmword [rdx]"); // VCVTPS2DQ_YMMi32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x2d, 0x5b, 0x0a], "vcvtps2dq ymm1{k5}, ymmword [rdx]"); // VCVTPS2DQ_YMMi32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
@@ -1563,6 +1590,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x3d, 0x66, 0x0a], "vpcmpgtd k1{k5}, ymm0, dword [rdx]{1to8}"); // VPCMPGTD_MASKmskw_MASKmskw_YMMi32_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x28, 0x66, 0xca], "vpcmpgtd k1, ymm0, ymm2"); // VPCMPGTD_MASKmskw_MASKmskw_YMMi32_YMMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x2d, 0x66, 0xca], "vpcmpgtd k1{k5}, ymm0, ymm2"); // VPCMPGTD_MASKmskw_MASKmskw_YMMi32_YMMi32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x3d, 0x66, 0xca]); // no broadcast on reg operand (no sae)
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x28, 0x66, 0x0a], "vpcmpgtd k1, ymm0, ymmword [rdx]"); // VPCMPGTD_MASKmskw_MASKmskw_YMMi32_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x2d, 0x66, 0x0a], "vpcmpgtd k1{k5}, ymm0, ymmword [rdx]"); // VPCMPGTD_MASKmskw_MASKmskw_YMMi32_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x58, 0x66, 0x0a], "vpcmpgtd k1, zmm0, dword [rdx]{1to16}"); // VPCMPGTD_MASKmskw_MASKmskw_ZMMi32_MEMi32_AVX512, extension: AVX512EVEX
@@ -1740,8 +1768,10 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0x6d, 0x0a], "vpunpckhqdq xmm1, xmm0, xmmword [rdx]"); // VPUNPCKHQDQ_XMMu64_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x0d, 0x6d, 0x0a], "vpunpckhqdq xmm1{k5}, xmm0, xmmword [rdx]"); // VPUNPCKHQDQ_XMMu64_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0x6e, 0xca], "vmovq xmm1, rdx"); // VMOVQ_XMMu64_GPR64u64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x88, 0x6e, 0xca]); //no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0x6e, 0x0a], "vmovq xmm1, qword [rdx]"); // VMOVQ_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x08, 0x6e, 0xca], "vmovd xmm1, edx"); // VMOVD_XMMu32_GPR32u32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x88, 0x6e, 0xca]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x08, 0x6e, 0x0a], "vmovd xmm1, dword [rdx]"); // VMOVD_XMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x6f, 0xca], "vmovdqa64 ymm1{k5}{z}, ymm2"); // VMOVDQA64_YMMu64_MASKmskw_YMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x6f, 0x0a], "vmovdqa64 ymm1{k5}{z}, ymmword [rdx]"); // VMOVDQA64_YMMu64_MASKmskw_MEMu64_AVX512, extension: AVX512EVEX
@@ -2182,6 +2212,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0x7e, 0xca], "vmovq rdx, xmm1"); // VMOVQ_GPR64u64_XMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0x7e, 0x0a], "vmovq qword [rdx], xmm1"); // VMOVQ_MEMu64_XMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x08, 0x7e, 0xca], "vmovd edx, xmm1"); // VMOVD_GPR32u32_XMMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x88, 0x7e, 0xca]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x08, 0x7e, 0x0a], "vmovd dword [rdx], xmm1"); // VMOVD_MEMu32_XMMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0x7f, 0xca], "vmovdqa64 ymm2{k5}{z}, ymm1"); // VMOVDQA64_YMMu64_MASKmskw_YMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0x7f, 0xca], "vmovdqa64 ymm2, ymm1"); // VMOVDQA64_YMMu64_MASKmskw_YMMu64_AVX512, extension: AVX512EVEX
@@ -2217,6 +2248,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x7d, 0xc2, 0xca, 0xcc], "vcmppd k1{k5}{sae}, zmm0, zmm2, 0xcc"); // VCMPPD_MASKmskw_MASKmskw_ZMMf64_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x38, 0xc2, 0x0a, 0xcc], "vcmppd k1, ymm0, qword [rdx]{1to4}, 0xcc"); // VCMPPD_MASKmskw_MASKmskw_YMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x3d, 0xc2, 0x0a, 0xcc], "vcmppd k1{k5}, ymm0, qword [rdx]{1to4}, 0xcc"); // VCMPPD_MASKmskw_MASKmskw_YMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0xbd, 0xc2, 0x0a, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0xc2, 0xca, 0xcc], "vcmppd k1, ymm0, ymm2, 0xcc"); // VCMPPD_MASKmskw_MASKmskw_YMMf64_YMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x2d, 0xc2, 0xca, 0xcc], "vcmppd k1{k5}, ymm0, ymm2, 0xcc"); // VCMPPD_MASKmskw_MASKmskw_YMMf64_YMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0xc2, 0x0a, 0xcc], "vcmppd k1, ymm0, ymmword [rdx], 0xcc"); // VCMPPD_MASKmskw_MASKmskw_YMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
@@ -2708,6 +2740,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x0d, 0xe5, 0x0a], "vpmulhw xmm1{k5}, xmm0, xmmword [rdx]"); // VPMULHW_XMMu16_MASKmskw_XMMu16_MEMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xfd, 0xe6, 0xca], "vcvttpd2dq ymm1{k5}{z}{sae}, zmm2"); // VCVTTPD2DQ_YMMi32_MASKmskw_ZMMf64_AVX512_VL512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x78, 0xe6, 0xca], "vcvttpd2dq ymm1{sae}, zmm2"); // VCVTTPD2DQ_YMMi32_MASKmskw_ZMMf64_AVX512_VL512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x78, 0xe6, 0xca]); // requires W=1
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x7d, 0xe6, 0xca], "vcvttpd2dq ymm1{k5}{sae}, zmm2"); // VCVTTPD2DQ_YMMi32_MASKmskw_ZMMf64_AVX512_VL512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xbd, 0xe6, 0x0a], "vcvttpd2dq xmm1{k5}{z}, qword [rdx]{1to4}"); // VCVTTPD2DQ_XMMi32_MASKmskw_MEMf64_AVX512_VL256, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x38, 0xe6, 0x0a], "vcvttpd2dq xmm1, qword [rdx]{1to4}"); // VCVTTPD2DQ_XMMi32_MASKmskw_MEMf64_AVX512_VL256, extension: AVX512EVEX
@@ -2739,6 +2772,7 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x28, 0xe7, 0x0a], "vmovntdq ymmword [rdx], ymm1"); // VMOVNTDQ_MEMu32_YMMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x48, 0xe7, 0x0a], "vmovntdq zmmword [rdx], zmm1"); // VMOVNTDQ_MEMu32_ZMMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7d, 0x08, 0xe7, 0x0a], "vmovntdq xmmword [rdx], xmm1"); // VMOVNTDQ_MEMu32_XMMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7d, 0x28, 0xe7, 0xca]); // no reg-reg encoding
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0xe8, 0xca], "vpsubsb ymm1{k5}{z}, ymm0, ymm2"); // VPSUBSB_YMMi8_MASKmskw_YMMi8_YMMi8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0xad, 0xe8, 0x0a], "vpsubsb ymm1{k5}{z}, ymm0, ymmword [rdx]"); // VPSUBSB_YMMi8_MASKmskw_YMMi8_MEMi8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0xe8, 0xca], "vpsubsb ymm1, ymm0, ymm2"); // VPSUBSB_YMMi8_MASKmskw_YMMi8_YMMi8_AVX512, extension: AVX512EVEX
@@ -3056,6 +3090,8 @@ fn tests_66_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x0d, 0xf5, 0x0a], "vpmaddwd xmm1{k5}, xmm0, xmmword [rdx]"); // VPMADDWD_XMMi32_MASKmskw_XMMi16_MEMi16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0xf6, 0xca], "vpsadbw ymm1, ymm0, ymm2"); // VPSADBW_YMMu16_YMMu8_YMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x28, 0xf6, 0x0a], "vpsadbw ymm1, ymm0, ymmword [rdx]"); // VPSADBW_YMMu16_YMMu8_MEMu8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfd, 0x38, 0xf6, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0xfd, 0xa8, 0xf6, 0x0a]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x48, 0xf6, 0xca], "vpsadbw zmm1, zmm0, zmm2"); // VPSADBW_ZMMu16_ZMMu8_ZMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x48, 0xf6, 0x0a], "vpsadbw zmm1, zmm0, zmmword [rdx]"); // VPSADBW_ZMMu16_ZMMu8_MEMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfd, 0x08, 0xf6, 0xca], "vpsadbw xmm1, xmm0, xmm2"); // VPSADBW_XMMu16_XMMu8_XMMu8_AVX512, extension: AVX512EVEX
@@ -3218,16 +3254,21 @@ fn tests_66_0f() {
 fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x10, 0xca], "vmovss xmm1{k5}{z}, xmm0, xmm2"); // VMOVSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x10, 0x0a], "vmovss xmm1{k5}{z}, dword [rdx]"); // VMOVSS_XMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x6d, 0x10, 0x0a]);
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x6f, 0x10, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x10, 0xca], "vmovss xmm1, xmm0, xmm2"); // VMOVSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0x10, 0xca], "vmovss xmm1{k5}, xmm0, xmm2"); // VMOVSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x10, 0x0a], "vmovss xmm1, dword [rdx]"); // VMOVSS_XMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x38, 0x10, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0x10, 0x0a], "vmovss xmm1{k5}, dword [rdx]"); // VMOVSS_XMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x11, 0xca], "vmovss xmm2{k5}{z}, xmm0, xmm1"); // VMOVSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x11, 0xca], "vmovss xmm2, xmm0, xmm1"); // VMOVSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0x11, 0xca], "vmovss xmm2{k5}, xmm0, xmm1"); // VMOVSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x3d, 0x11, 0xca]);
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x11, 0x0a], "vmovss dword [rdx], xmm1"); // VMOVSS_MEMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0x11, 0x0a], "vmovss dword [rdx]{k5}, xmm1"); // VMOVSS_MEMf32_MASKmskw_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x12, 0xca], "vmovsldup ymm1{k5}{z}, ymm2"); // VMOVSLDUP_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7e, 0xad, 0x11, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x12, 0x0a], "vmovsldup ymm1{k5}{z}, ymmword [rdx]"); // VMOVSLDUP_YMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x12, 0xca], "vmovsldup ymm1, ymm2"); // VMOVSLDUP_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0x12, 0xca], "vmovsldup ymm1{k5}, ymm2"); // VMOVSLDUP_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
@@ -3266,7 +3307,10 @@ fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x78, 0x2a, 0xca], "vcvtsi2ss xmm1{rz-sae}, xmm0, rdx"); // VCVTSI2SS_XMMf32_XMMf32_GPR64i64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x38, 0x2a, 0xca], "vcvtsi2ss xmm1{rd-sae}, xmm0, rdx"); // VCVTSI2SS_XMMf32_XMMf32_GPR64i64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x2a, 0xca], "vcvtsi2ss xmm1, xmm0, rdx"); // VCVTSI2SS_XMMf32_XMMf32_GPR64i64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x29, 0x2a, 0xca]); // mask reg must be 000
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x2a, 0x0a], "vcvtsi2ss xmm1, xmm0, qword [rdx]"); // VCVTSI2SS_XMMf32_XMMf32_MEMi64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x38, 0x2a, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x68, 0x2a, 0x0a]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x78, 0x2a, 0xca], "vcvtsi2ss xmm1{rz-sae}, xmm0, edx"); // VCVTSI2SS_XMMf32_XMMf32_GPR32i32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x38, 0x2a, 0xca], "vcvtsi2ss xmm1{rd-sae}, xmm0, edx"); // VCVTSI2SS_XMMf32_XMMf32_GPR32i32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x2a, 0xca], "vcvtsi2ss xmm1, xmm0, edx"); // VCVTSI2SS_XMMf32_XMMf32_GPR32i32_AVX512, extension: AVX512EVEX
@@ -3277,14 +3321,21 @@ fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x18, 0x2a, 0xca], "vcvtsi2ss xmm1{rne-sae}, xmm0, edx"); // VCVTSI2SS_XMMf32_XMMf32_GPR32i32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x78, 0x2c, 0xca], "vcvttss2si rcx{sae}, xmm2"); // VCVTTSS2SI_GPR64i64_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x2c, 0xca], "vcvttss2si rcx, xmm2"); // VCVTTSS2SI_GPR64i64_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x29, 0x2c, 0xca]); // mask register must be 000
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x2c, 0x0a], "vcvttss2si rcx, dword [rdx]"); // VCVTTSS2SI_GPR64i64_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x38, 0x2c, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x38, 0x2c, 0x0a]); // no broadcast, regardless of W
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x68, 0x2c, 0x0a]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x78, 0x2c, 0xca], "vcvttss2si ecx{sae}, xmm2"); // VCVTTSS2SI_GPR32i32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x2c, 0xca], "vcvttss2si ecx, xmm2"); // VCVTTSS2SI_GPR32i32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x2c, 0x0a], "vcvttss2si ecx, dword [rdx]"); // VCVTTSS2SI_GPR32i32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x78, 0x2d, 0xca], "vcvtss2si rcx{rz-sae}, xmm2"); // VCVTSS2SI_GPR64i64_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x38, 0x2d, 0xca], "vcvtss2si rcx{rd-sae}, xmm2"); // VCVTSS2SI_GPR64i64_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x2d, 0xca], "vcvtss2si rcx, xmm2"); // VCVTSS2SI_GPR64i64_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x29, 0x2d, 0xca]); // mask register must be 000
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x2d, 0x0a], "vcvtss2si rcx, dword [rdx]"); // VCVTSS2SI_GPR64i64_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x38, 0x2d, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x68, 0x2d, 0x0a]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x78, 0x2d, 0xca], "vcvtss2si ecx{rz-sae}, xmm2"); // VCVTSS2SI_GPR32i32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x38, 0x2d, 0xca], "vcvtss2si ecx{rd-sae}, xmm2"); // VCVTSS2SI_GPR32i32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x2d, 0xca], "vcvtss2si ecx, xmm2"); // VCVTSS2SI_GPR32i32_XMMf32_AVX512, extension: AVX512EVEX
@@ -3349,6 +3400,7 @@ fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x1d, 0x59, 0xca], "vmulss xmm1{k5}{rne-sae}, xmm0, xmm2"); // VMULSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xfd, 0x5a, 0xca], "vcvtss2sd xmm1{k5}{z}{sae}, xmm0, xmm2"); // VCVTSS2SD_XMMf64_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x78, 0x5a, 0xca], "vcvtss2sd xmm1{sae}, xmm0, xmm2"); // VCVTSS2SD_XMMf64_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x78, 0x5a, 0x0a]); // no broadcast with memory source
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x7d, 0x5a, 0xca], "vcvtss2sd xmm1{k5}{sae}, xmm0, xmm2"); // VCVTSS2SD_XMMf64_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x5a, 0xca], "vcvtss2sd xmm1{k5}{z}, xmm0, xmm2"); // VCVTSS2SD_XMMf64_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0xad, 0x5a, 0x0a], "vcvtss2sd xmm1{k5}{z}, xmm0, dword [rdx]"); // VCVTSS2SD_XMMf64_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
@@ -3582,6 +3634,7 @@ fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x38, 0x7b, 0xca], "vcvtusi2ss xmm1{rd-sae}, xmm0, rdx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR64u64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x7b, 0xca], "vcvtusi2ss xmm1, xmm0, rdx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR64u64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x7b, 0x0a], "vcvtusi2ss xmm1, xmm0, qword [rdx]"); // VCVTUSI2SS_XMMf32_XMMf32_MEMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x68, 0x7b, 0x0a]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x78, 0x7b, 0xca], "vcvtusi2ss xmm1{rz-sae}, xmm0, edx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x38, 0x7b, 0xca], "vcvtusi2ss xmm1{rd-sae}, xmm0, edx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0x7b, 0xca], "vcvtusi2ss xmm1, xmm0, edx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR32u32_AVX512, extension: AVX512EVEX
@@ -3591,6 +3644,7 @@ fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x58, 0x7b, 0xca], "vcvtusi2ss xmm1{ru-sae}, xmm0, edx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x18, 0x7b, 0xca], "vcvtusi2ss xmm1{rne-sae}, xmm0, edx"); // VCVTUSI2SS_XMMf32_XMMf32_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x08, 0x7e, 0xca], "vmovq xmm1, xmm2"); // VMOVQ_XMMu64_XMMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xfe, 0x88, 0x7e, 0xca]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x08, 0x7e, 0x0a], "vmovq xmm1, qword [rdx]"); // VMOVQ_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0xad, 0x7f, 0xca], "vmovdqu64 ymm2{k5}{z}, ymm1"); // VMOVDQU64_YMMu64_MASKmskw_YMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0x28, 0x7f, 0xca], "vmovdqu64 ymm2, ymm1"); // VMOVDQU64_YMMu64_MASKmskw_YMMu64_AVX512, extension: AVX512EVEX
@@ -3626,6 +3680,7 @@ fn tests_f2_0f() {
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x7d, 0xc2, 0xca, 0xcc], "vcmpss k1{k5}{sae}, xmm0, xmm2, 0xcc"); // VCMPSS_MASKmskw_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0xc2, 0xca, 0xcc], "vcmpss k1, xmm0, xmm2, 0xcc"); // VCMPSS_MASKmskw_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0xc2, 0xca, 0xcc], "vcmpss k1{k5}, xmm0, xmm2, 0xcc"); // VCMPSS_MASKmskw_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7e, 0x6d, 0xc2, 0xca, 0xcc]); // do not allow L'L=11
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x28, 0xc2, 0x0a, 0xcc], "vcmpss k1, xmm0, dword [rdx], 0xcc"); // VCMPSS_MASKmskw_MASKmskw_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7e, 0x2d, 0xc2, 0x0a, 0xcc], "vcmpss k1{k5}, xmm0, dword [rdx], 0xcc"); // VCMPSS_MASKmskw_MASKmskw_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xfe, 0xfd, 0xe6, 0xca], "vcvtqq2pd zmm1{k5}{z}{rz-sae}, zmm2"); // VCVTQQ2PD_ZMMi64_MASKmskw_ZMMf64_AVX512, extension: AVX512EVEX
@@ -3699,6 +3754,8 @@ fn tests_f2_0f() {
 fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x10, 0xca], "vmovsd xmm1{k5}{z}, xmm0, xmm2"); // VMOVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x10, 0x0a], "vmovsd xmm1{k5}{z}, qword [rdx]"); // VMOVSD_XMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0x6d, 0x10, 0x0a]);
+    test_invalid(&[0x62, 0xf1, 0xff, 0x6f, 0x10, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x10, 0xca], "vmovsd xmm1, xmm0, xmm2"); // VMOVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x10, 0xca], "vmovsd xmm1{k5}, xmm0, xmm2"); // VMOVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x10, 0x0a], "vmovsd xmm1, qword [rdx]"); // VMOVSD_XMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
@@ -3706,10 +3763,13 @@ fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x11, 0xca], "vmovsd xmm2{k5}{z}, xmm0, xmm1"); // VMOVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x11, 0xca], "vmovsd xmm2, xmm0, xmm1"); // VMOVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x11, 0xca], "vmovsd xmm2{k5}, xmm0, xmm1"); // VMOVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0x3d, 0x11, 0xca]);
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x11, 0x0a], "vmovsd qword [rdx], xmm1"); // VMOVSD_MEMf64_MASKmskw_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x11, 0x0a], "vmovsd qword [rdx]{k5}, xmm1"); // VMOVSD_MEMf64_MASKmskw_XMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0xad, 0x11, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x12, 0xca], "vmovddup ymm1{k5}{z}, ymm2"); // VMOVDDUP_YMMf64_MASKmskw_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x12, 0x0a], "vmovddup ymm1{k5}{z}, ymmword [rdx]"); // VMOVDDUP_YMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0xbd, 0x12, 0x0a]);
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x12, 0xca], "vmovddup ymm1, ymm2"); // VMOVDDUP_YMMf64_MASKmskw_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x12, 0xca], "vmovddup ymm1{k5}, ymm2"); // VMOVDDUP_YMMf64_MASKmskw_YMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x12, 0x0a], "vmovddup ymm1, ymmword [rdx]"); // VMOVDDUP_YMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
@@ -3763,6 +3823,8 @@ fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x51, 0xca], "vsqrtsd xmm1, xmm0, xmm2"); // VSQRTSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x51, 0xca], "vsqrtsd xmm1{k5}, xmm0, xmm2"); // VSQRTSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x51, 0x0a], "vsqrtsd xmm1, xmm0, qword [rdx]"); // VSQRTSD_XMMf64_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0x38, 0x51, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf1, 0xff, 0x68, 0x51, 0x0a]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x51, 0x0a], "vsqrtsd xmm1{k5}, xmm0, qword [rdx]"); // VSQRTSD_XMMf64_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xdd, 0x51, 0xca], "vsqrtsd xmm1{k5}{z}{ru-sae}, xmm0, xmm2"); // VSQRTSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x58, 0x51, 0xca], "vsqrtsd xmm1{ru-sae}, xmm0, xmm2"); // VSQRTSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
@@ -3814,6 +3876,8 @@ fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0x3d, 0x5a, 0xca], "vcvtsd2ss xmm1{k5}{rd-sae}, xmm0, xmm2"); // VCVTSD2SS_XMMf32_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x5a, 0xca], "vcvtsd2ss xmm1{k5}{z}, xmm0, xmm2"); // VCVTSD2SS_XMMf32_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x5a, 0x0a], "vcvtsd2ss xmm1{k5}{z}, xmm0, qword [rdx]"); // VCVTSD2SS_XMMf32_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0xbd, 0x5a, 0x0a]); // no L'L=11 unless for sae
+    test_invalid(&[0x62, 0xf1, 0xff, 0x6f, 0x5a, 0x0a]); // no L'L=11 unless for sae
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x5a, 0xca], "vcvtsd2ss xmm1, xmm0, xmm2"); // VCVTSD2SS_XMMf32_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0x5a, 0xca], "vcvtsd2ss xmm1{k5}, xmm0, xmm2"); // VCVTSD2SS_XMMf32_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x5a, 0x0a], "vcvtsd2ss xmm1, xmm0, qword [rdx]"); // VCVTSD2SS_XMMf32_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
@@ -3871,6 +3935,7 @@ fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0x1d, 0x5e, 0xca], "vdivsd xmm1{k5}{rne-sae}, xmm0, xmm2"); // VDIVSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xfd, 0x5f, 0xca], "vmaxsd xmm1{k5}{z}{sae}, xmm0, xmm2"); // VMAXSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x78, 0x5f, 0xca], "vmaxsd xmm1{sae}, xmm0, xmm2"); // VMAXSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0x7f, 0x78, 0x5f, 0xca]); // requires W=1
     test_avx_full(&[0x62, 0xf1, 0xff, 0x7d, 0x5f, 0xca], "vmaxsd xmm1{k5}{sae}, xmm0, xmm2"); // VMAXSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x5f, 0xca], "vmaxsd xmm1{k5}{z}, xmm0, xmm2"); // VMAXSD_XMMf64_MASKmskw_XMMf64_XMMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0xad, 0x5f, 0x0a], "vmaxsd xmm1{k5}{z}, xmm0, qword [rdx]"); // VMAXSD_XMMf64_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
@@ -4032,6 +4097,7 @@ fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0x38, 0x7b, 0xca], "vcvtusi2sd xmm1{rd-sae}, xmm0, rdx"); // VCVTUSI2SD_XMMf64_XMMf64_GPR64u64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x7b, 0xca], "vcvtusi2sd xmm1, xmm0, rdx"); // VCVTUSI2SD_XMMf64_XMMf64_GPR64u64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0x7b, 0x0a], "vcvtusi2sd xmm1, xmm0, qword [rdx]"); // VCVTUSI2SD_XMMf64_XMMf64_MEMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0x68, 0x7b, 0x0a]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0x7f, 0x78, 0x7b, 0xca], "vcvtusi2sd xmm1, xmm0, edx"); // VCVTUSI2SD_XMMf64_XMMf64_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0x7f, 0x28, 0x7b, 0x0a], "vcvtusi2sd xmm1, xmm0, dword [rdx]"); // VCVTUSI2SD_XMMf64_XMMf64_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x58, 0x7b, 0xca], "vcvtusi2sd xmm1{ru-sae}, xmm0, rdx"); // VCVTUSI2SD_XMMf64_XMMf64_GPR64u64_AVX512, extension: AVX512EVEX
@@ -4072,6 +4138,7 @@ fn tests_f3_0f() {
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0xc2, 0xca, 0xcc], "vcmpsd k1{k5}, xmm0, xmm2, 0xcc"); // VCMPSD_MASKmskw_MASKmskw_XMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x28, 0xc2, 0x0a, 0xcc], "vcmpsd k1, xmm0, qword [rdx], 0xcc"); // VCMPSD_MASKmskw_MASKmskw_XMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x2d, 0xc2, 0x0a, 0xcc], "vcmpsd k1{k5}, xmm0, qword [rdx], 0xcc"); // VCMPSD_MASKmskw_MASKmskw_XMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf1, 0xff, 0x6d, 0xc2, 0x0a, 0xcc]); // no L'L=11
     test_avx_full(&[0x62, 0xf1, 0xff, 0xfd, 0xe6, 0xca], "vcvtpd2dq ymm1{k5}{z}{rz-sae}, zmm2"); // VCVTPD2DQ_YMMi32_MASKmskw_ZMMf64_AVX512_VL512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x78, 0xe6, 0xca], "vcvtpd2dq ymm1{rz-sae}, zmm2"); // VCVTPD2DQ_YMMi32_MASKmskw_ZMMf64_AVX512_VL512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf1, 0xff, 0x7d, 0xe6, 0xca], "vcvtpd2dq ymm1{k5}{rz-sae}, zmm2"); // VCVTPD2DQ_YMMi32_MASKmskw_ZMMf64_AVX512_VL512, extension: AVX512EVEX
@@ -4278,6 +4345,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x0d, 0x12, 0x0a], "vpsllvw xmm1{k5}, xmm0, xmmword [rdx]"); // VPSLLVW_XMMu16_MASKmskw_XMMu16_MEMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xfd, 0x13, 0xca], "vcvtph2ps zmm1{k5}{z}{sae}, ymm2"); // VCVTPH2PS_ZMMf32_MASKmskw_YMMf16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x78, 0x13, 0xca], "vcvtph2ps zmm1{sae}, ymm2"); // VCVTPH2PS_ZMMf32_MASKmskw_YMMf16_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0x78, 0x13, 0x0a]); // W=0
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x7d, 0x13, 0xca], "vcvtph2ps zmm1{k5}{sae}, ymm2"); // VCVTPH2PS_ZMMf32_MASKmskw_YMMf16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x13, 0xca], "vcvtph2ps ymm1{k5}{z}, xmm2"); // VCVTPH2PS_YMMf32_MASKmskw_XMMf16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x13, 0x0a], "vcvtph2ps ymm1{k5}{z}, xmmword [rdx]"); // VCVTPH2PS_YMMf32_MASKmskw_MEMf16_AVX512, extension: AVX512EVEX
@@ -4310,6 +4378,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x38, 0x14, 0x0a], "vprorvd ymm1, ymm0, dword [rdx]{1to8}"); // VPRORVD_YMMu32_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x3d, 0x14, 0x0a], "vprorvd ymm1{k5}, ymm0, dword [rdx]{1to8}"); // VPRORVD_YMMu32_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x14, 0xca], "vprorvd ymm1{k5}{z}, ymm0, ymm2"); // VPRORVD_YMMu32_MASKmskw_YMMu32_YMMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xbd, 0x14, 0xca]); // no broadcast
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x14, 0x0a], "vprorvd ymm1{k5}{z}, ymm0, ymmword [rdx]"); // VPRORVD_YMMu32_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x14, 0xca], "vprorvd ymm1, ymm0, ymm2"); // VPRORVD_YMMu32_MASKmskw_YMMu32_YMMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x14, 0xca], "vprorvd ymm1{k5}, ymm0, ymm2"); // VPRORVD_YMMu32_MASKmskw_YMMu32_YMMu32_AVX512, extension: AVX512EVEX
@@ -4682,12 +4751,14 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x08, 0x24, 0x0a], "vpmovsxwq xmm1, dword [rdx]"); // VPMOVSXWQ_XMMi64_MASKmskw_MEMi16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x0d, 0x24, 0x0a], "vpmovsxwq xmm1{k5}, dword [rdx]"); // VPMOVSXWQ_XMMi64_MASKmskw_MEMi16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x25, 0xca], "vpmovsxdq ymm1{k5}{z}, xmm2"); // VPMOVSXDQ_YMMi64_MASKmskw_XMMi32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xad, 0x25, 0xca]); // W must be 1
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x25, 0x0a], "vpmovsxdq ymm1{k5}{z}, xmmword [rdx]"); // VPMOVSXDQ_YMMi64_MASKmskw_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x25, 0xca], "vpmovsxdq ymm1, xmm2"); // VPMOVSXDQ_YMMi64_MASKmskw_XMMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x25, 0xca], "vpmovsxdq ymm1{k5}, xmm2"); // VPMOVSXDQ_YMMi64_MASKmskw_XMMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x25, 0x0a], "vpmovsxdq ymm1, xmmword [rdx]"); // VPMOVSXDQ_YMMi64_MASKmskw_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x25, 0x0a], "vpmovsxdq ymm1{k5}, xmmword [rdx]"); // VPMOVSXDQ_YMMi64_MASKmskw_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xcd, 0x25, 0xca], "vpmovsxdq zmm1{k5}{z}, ymm2"); // VPMOVSXDQ_ZMMi64_MASKmskw_YMMi32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xcd, 0x25, 0xca]);
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xcd, 0x25, 0x0a], "vpmovsxdq zmm1{k5}{z}, ymmword [rdx]"); // VPMOVSXDQ_ZMMi64_MASKmskw_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x48, 0x25, 0xca], "vpmovsxdq zmm1, ymm2"); // VPMOVSXDQ_ZMMi64_MASKmskw_YMMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x4d, 0x25, 0xca], "vpmovsxdq zmm1{k5}, ymm2"); // VPMOVSXDQ_ZMMi64_MASKmskw_YMMi32_AVX512, extension: AVX512EVEX
@@ -4703,10 +4774,12 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x26, 0xca], "vptestmw k1{k5}, ymm0, ymm2"); // VPTESTMW_MASKmskw_MASKmskw_YMMu16_YMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0x26, 0x0a], "vptestmw k1, ymm0, ymmword [rdx]"); // VPTESTMW_MASKmskw_MASKmskw_YMMu16_MEMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x26, 0x0a], "vptestmw k1{k5}, ymm0, ymmword [rdx]"); // VPTESTMW_MASKmskw_MASKmskw_YMMu16_MEMu16_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xad, 0x26, 0x0a]); // no zero-merge
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x26, 0xca], "vptestmb k1, ymm0, ymm2"); // VPTESTMB_MASKmskw_MASKmskw_YMMu8_YMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x26, 0xca], "vptestmb k1{k5}, ymm0, ymm2"); // VPTESTMB_MASKmskw_MASKmskw_YMMu8_YMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x26, 0x0a], "vptestmb k1, ymm0, ymmword [rdx]"); // VPTESTMB_MASKmskw_MASKmskw_YMMu8_MEMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x26, 0x0a], "vptestmb k1{k5}, ymm0, ymmword [rdx]"); // VPTESTMB_MASKmskw_MASKmskw_YMMu8_MEMu8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xad, 0x26, 0x0a]); // no zero-merge
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0x26, 0xca], "vptestmw k1, zmm0, zmm2"); // VPTESTMW_MASKmskw_MASKmskw_ZMMu16_ZMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x4d, 0x26, 0xca], "vptestmw k1{k5}, zmm0, zmm2"); // VPTESTMW_MASKmskw_MASKmskw_ZMMu16_ZMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0x26, 0x0a], "vptestmw k1, zmm0, zmmword [rdx]"); // VPTESTMW_MASKmskw_MASKmskw_ZMMu16_MEMu16_AVX512, extension: AVX512EVEX
@@ -4731,12 +4804,15 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x27, 0x0a], "vptestmq k1{k5}, ymm0, ymmword [rdx]"); // VPTESTMQ_MASKmskw_MASKmskw_YMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x38, 0x27, 0x0a], "vptestmd k1, ymm0, dword [rdx]{1to8}"); // VPTESTMD_MASKmskw_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x3d, 0x27, 0x0a], "vptestmd k1{k5}, ymm0, dword [rdx]{1to8}"); // VPTESTMD_MASKmskw_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xdd, 0x27, 0x0a]); // no zero-merge
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x27, 0xca], "vptestmd k1, ymm0, ymm2"); // VPTESTMD_MASKmskw_MASKmskw_YMMu32_YMMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x27, 0xca], "vptestmd k1{k5}, ymm0, ymm2"); // VPTESTMD_MASKmskw_MASKmskw_YMMu32_YMMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x3d, 0x27, 0xca]); // no invalid broadcast mode
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x27, 0x0a], "vptestmd k1, ymm0, ymmword [rdx]"); // VPTESTMD_MASKmskw_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x27, 0x0a], "vptestmd k1{k5}, ymm0, ymmword [rdx]"); // VPTESTMD_MASKmskw_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x58, 0x27, 0x0a], "vptestmq k1, zmm0, qword [rdx]{1to8}"); // VPTESTMQ_MASKmskw_MASKmskw_ZMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x5d, 0x27, 0x0a], "vptestmq k1{k5}, zmm0, qword [rdx]{1to8}"); // VPTESTMQ_MASKmskw_MASKmskw_ZMMu64_MEMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xdd, 0x27, 0x0a]); // no zero-merge
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x18, 0x27, 0x0a], "vptestmq k1, xmm0, qword [rdx]{1to2}"); // VPTESTMQ_MASKmskw_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x1d, 0x27, 0x0a], "vptestmq k1{k5}, xmm0, qword [rdx]{1to2}"); // VPTESTMQ_MASKmskw_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0x27, 0xca], "vptestmq k1, zmm0, zmm2"); // VPTESTMQ_MASKmskw_MASKmskw_ZMMu64_ZMMu64_AVX512, extension: AVX512EVEX
@@ -4763,6 +4839,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x38, 0x28, 0x0a], "vpmuldq ymm1, ymm0, qword [rdx]{1to4}"); // VPMULDQ_YMMi64_MASKmskw_YMMi32_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x3d, 0x28, 0x0a], "vpmuldq ymm1{k5}, ymm0, qword [rdx]{1to4}"); // VPMULDQ_YMMi64_MASKmskw_YMMi32_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0xad, 0x28, 0xca], "vpmuldq ymm1{k5}{z}, ymm0, ymm2"); // VPMULDQ_YMMi64_MASKmskw_YMMi32_YMMi32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xbd, 0x28, 0xca]); // no broadcast on register source
     test_avx_full(&[0x62, 0xf2, 0xfd, 0xad, 0x28, 0x0a], "vpmuldq ymm1{k5}{z}, ymm0, ymmword [rdx]"); // VPMULDQ_YMMi64_MASKmskw_YMMi32_MEMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0x28, 0xca], "vpmuldq ymm1, ymm0, ymm2"); // VPMULDQ_YMMi64_MASKmskw_YMMi32_YMMi32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x28, 0xca], "vpmuldq ymm1{k5}, ymm0, ymm2"); // VPMULDQ_YMMi64_MASKmskw_YMMi32_YMMi32_AVX512, extension: AVX512EVEX
@@ -4790,6 +4867,8 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x3d, 0x29, 0x0a], "vpcmpeqq k1{k5}, ymm0, qword [rdx]{1to4}"); // VPCMPEQQ_MASKmskw_MASKmskw_YMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0x29, 0xca], "vpcmpeqq k1, ymm0, ymm2"); // VPCMPEQQ_MASKmskw_MASKmskw_YMMu64_YMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x29, 0xca], "vpcmpeqq k1{k5}, ymm0, ymm2"); // VPCMPEQQ_MASKmskw_MASKmskw_YMMu64_YMMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xad, 0x29, 0xca]); // no zero-merge
+    test_invalid(&[0x62, 0xf2, 0xfd, 0x3d, 0x29, 0xca]); // no zero-merge
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0x29, 0x0a], "vpcmpeqq k1, ymm0, ymmword [rdx]"); // VPCMPEQQ_MASKmskw_MASKmskw_YMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x29, 0x0a], "vpcmpeqq k1{k5}, ymm0, ymmword [rdx]"); // VPCMPEQQ_MASKmskw_MASKmskw_YMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x58, 0x29, 0x0a], "vpcmpeqq k1, zmm0, qword [rdx]{1to8}"); // VPCMPEQQ_MASKmskw_MASKmskw_ZMMu64_MEMu64_AVX512, extension: AVX512EVEX
@@ -4805,6 +4884,8 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x08, 0x29, 0x0a], "vpcmpeqq k1, xmm0, xmmword [rdx]"); // VPCMPEQQ_MASKmskw_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x0d, 0x29, 0x0a], "vpcmpeqq k1{k5}, xmm0, xmmword [rdx]"); // VPCMPEQQ_MASKmskw_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x2a, 0x0a], "vmovntdqa ymm1, ymmword [rdx]"); // VMOVNTDQA_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x28, 0x2a, 0xca]); // no register source
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xa8, 0x2a, 0x0a]); // no broadcast
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x48, 0x2a, 0x0a], "vmovntdqa zmm1, zmmword [rdx]"); // VMOVNTDQA_ZMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x08, 0x2a, 0x0a], "vmovntdqa xmm1, xmmword [rdx]"); // VMOVNTDQA_XMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xbd, 0x2b, 0x0a], "vpackusdw ymm1{k5}{z}, ymm0, dword [rdx]{1to8}"); // VPACKUSDW_YMMu16_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
@@ -4925,6 +5006,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0x2d, 0x0a], "vscalefsd xmm1, xmm0, qword [rdx]"); // VSCALEFSD_XMMf64_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x2d, 0x0a], "vscalefsd xmm1{k5}, xmm0, qword [rdx]"); // VSCALEFSD_XMMf64_MASKmskw_XMMf64_MEMf64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xfd, 0x2d, 0xca], "vscalefss xmm1{k5}{z}{rz-sae}, xmm0, xmm2"); // VSCALEFSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xfd, 0x2d, 0x0a]); // sae is indicated by evex.b, with memory source evex.b implies broadcast as well. vscalefss does not broadcast, so reject.
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x78, 0x2d, 0xca], "vscalefss xmm1{rz-sae}, xmm0, xmm2"); // VSCALEFSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x7d, 0x2d, 0xca], "vscalefss xmm1{k5}{rz-sae}, xmm0, xmm2"); // VSCALEFSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xbd, 0x2d, 0xca], "vscalefss xmm1{k5}{z}{rd-sae}, xmm0, xmm2"); // VSCALEFSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
@@ -5526,6 +5608,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x7d, 0x43, 0xca], "vgetexpss xmm1{k5}{sae}, xmm0, xmm2"); // VGETEXPSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x43, 0xca], "vgetexpss xmm1{k5}{z}, xmm0, xmm2"); // VGETEXPSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x43, 0x0a], "vgetexpss xmm1{k5}{z}, xmm0, dword [rdx]"); // VGETEXPSS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xbd, 0x43, 0x0a]); // no broadcast
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x43, 0xca], "vgetexpss xmm1, xmm0, xmm2"); // VGETEXPSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x43, 0xca], "vgetexpss xmm1{k5}, xmm0, xmm2"); // VGETEXPSS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x43, 0x0a], "vgetexpss xmm1, xmm0, dword [rdx]"); // VGETEXPSS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
@@ -5810,6 +5893,8 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x4d, 0x0a], "vrcp14ss xmm1{k5}{z}, xmm0, dword [rdx]"); // VRCP14SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x4d, 0xca], "vrcp14ss xmm1, xmm0, xmm2"); // VRCP14SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x4d, 0xca], "vrcp14ss xmm1{k5}, xmm0, xmm2"); // VRCP14SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x3d, 0x4d, 0xca]); // no sae
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x6d, 0x4d, 0xca]); // no L'L=11
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x4d, 0x0a], "vrcp14ss xmm1, xmm0, dword [rdx]"); // VRCP14SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x4d, 0x0a], "vrcp14ss xmm1{k5}, xmm0, dword [rdx]"); // VRCP14SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0xbd, 0x4e, 0x0a], "vrsqrt14pd ymm1{k5}{z}, qword [rdx]{1to4}"); // VRSQRT14PD_YMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
@@ -5828,6 +5913,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x4e, 0x0a], "vrsqrt14ps ymm1{k5}{z}, ymmword [rdx]"); // VRSQRT14PS_YMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x4e, 0xca], "vrsqrt14ps ymm1, ymm2"); // VRSQRT14PS_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x4e, 0xca], "vrsqrt14ps ymm1{k5}, ymm2"); // VRSQRT14PS_YMMf32_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x3d, 0x4e, 0xca]); // no sae
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x4e, 0x0a], "vrsqrt14ps ymm1, ymmword [rdx]"); // VRSQRT14PS_YMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x4e, 0x0a], "vrsqrt14ps ymm1{k5}, ymmword [rdx]"); // VRSQRT14PS_YMMf32_MASKmskw_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0xdd, 0x4e, 0x0a], "vrsqrt14pd zmm1{k5}{z}, qword [rdx]{1to8}"); // VRSQRT14PD_ZMMf64_MASKmskw_MEMf64_AVX512, extension: AVX512EVEX
@@ -5875,6 +5961,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x4f, 0xca], "vrsqrt14ss xmm1{k5}{z}, xmm0, xmm2"); // VRSQRT14SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x4f, 0x0a], "vrsqrt14ss xmm1{k5}{z}, xmm0, dword [rdx]"); // VRSQRT14SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x4f, 0xca], "vrsqrt14ss xmm1, xmm0, xmm2"); // VRSQRT14SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x68, 0x4f, 0xca]); // no L'L=11
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x4f, 0xca], "vrsqrt14ss xmm1{k5}, xmm0, xmm2"); // VRSQRT14SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x4f, 0x0a], "vrsqrt14ss xmm1, xmm0, dword [rdx]"); // VRSQRT14SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x4f, 0x0a], "vrsqrt14ss xmm1{k5}, xmm0, dword [rdx]"); // VRSQRT14SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
@@ -6194,6 +6281,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x63, 0xca], "vpcompressb ymm2{k5}, ymm1"); // VPCOMPRESSB_YMMu8_MASKmskw_YMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x63, 0x0a], "vpcompressb ymmword [rdx], ymm1"); // VPCOMPRESSB_MEMu8_MASKmskw_YMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x63, 0x0a], "vpcompressb ymmword [rdx]{k5}, ymm1"); // VPCOMPRESSB_MEMu8_MASKmskw_YMMu8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0xad, 0x63, 0x0a]); // no zero-merge on memory operands
     test_avx_full(&[0x62, 0xf2, 0xfd, 0xcd, 0x63, 0xca], "vpcompressw zmm2{k5}{z}, zmm1"); // VPCOMPRESSW_ZMMu16_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0x63, 0xca], "vpcompressw zmm2, zmm1"); // VPCOMPRESSW_ZMMu16_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x4d, 0x63, 0xca], "vpcompressw zmm2{k5}, zmm1"); // VPCOMPRESSW_ZMMu16_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
@@ -6649,6 +6737,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x78, 0xca], "vpbroadcastb ymm1{k5}{z}, xmm2"); // VPBROADCASTB_YMMu8_MASKmskw_XMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x78, 0x0a], "vpbroadcastb ymm1{k5}{z}, byte [rdx]"); // VPBROADCASTB_YMMu8_MASKmskw_MEMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x78, 0xca], "vpbroadcastb ymm1, xmm2"); // VPBROADCASTB_YMMu8_MASKmskw_XMMu8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x38, 0x78, 0xca]); // deny evex.b
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x78, 0xca], "vpbroadcastb ymm1{k5}, xmm2"); // VPBROADCASTB_YMMu8_MASKmskw_XMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x78, 0x0a], "vpbroadcastb ymm1, byte [rdx]"); // VPBROADCASTB_YMMu8_MASKmskw_MEMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x78, 0x0a], "vpbroadcastb ymm1{k5}, byte [rdx]"); // VPBROADCASTB_YMMu8_MASKmskw_MEMu8_AVX512, extension: AVX512EVEX
@@ -6684,6 +6773,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x0d, 0x79, 0x0a], "vpbroadcastw xmm1{k5}, word [rdx]"); // VPBROADCASTW_XMMu16_MASKmskw_MEMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x7a, 0xca], "vpbroadcastb ymm1{k5}{z}, edx"); // VPBROADCASTB_YMMu8_MASKmskw_GPR32u8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x7a, 0xca], "vpbroadcastb ymm1, edx"); // VPBROADCASTB_YMMu8_MASKmskw_GPR32u8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x38, 0x7a, 0xca]); // still no evex.b
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x7a, 0xca], "vpbroadcastb ymm1{k5}, edx"); // VPBROADCASTB_YMMu8_MASKmskw_GPR32u8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xcd, 0x7a, 0xca], "vpbroadcastb zmm1{k5}{z}, edx"); // VPBROADCASTB_ZMMu8_MASKmskw_GPR32u8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x48, 0x7a, 0xca], "vpbroadcastb zmm1, edx"); // VPBROADCASTB_ZMMu8_MASKmskw_GPR32u8_AVX512, extension: AVX512EVEX
@@ -6705,6 +6795,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x2d, 0x7c, 0xca], "vpbroadcastq ymm1{k5}, rdx"); // VPBROADCASTQ_YMMu64_MASKmskw_GPR64u64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x7c, 0xca], "vpbroadcastd ymm1{k5}{z}, edx"); // VPBROADCASTD_YMMu32_MASKmskw_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x7c, 0xca], "vpbroadcastd ymm1, edx"); // VPBROADCASTD_YMMu32_MASKmskw_GPR32u32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7d, 0x38, 0x7c, 0xca]); // no broadcast here either
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x7c, 0xca], "vpbroadcastd ymm1{k5}, edx"); // VPBROADCASTD_YMMu32_MASKmskw_GPR32u32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0xcd, 0x7c, 0xca], "vpbroadcastq zmm1{k5}{z}, rdx"); // VPBROADCASTQ_ZMMu64_MASKmskw_GPR64u64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0x7c, 0xca], "vpbroadcastq zmm1, rdx"); // VPBROADCASTQ_ZMMu64_MASKmskw_GPR64u64_AVX512, extension: AVX512EVEX
@@ -7324,6 +7415,7 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x99, 0xca], "vfmadd132ss xmm1{k5}{z}, xmm0, xmm2"); // VFMADD132SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0xad, 0x99, 0x0a], "vfmadd132ss xmm1{k5}{z}, xmm0, dword [rdx]"); // VFMADD132SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x99, 0xca], "vfmadd132ss xmm1, xmm0, xmm2"); // VFMADD132SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
+    test_avx_full(&[0x62, 0xf2, 0x7d, 0x68, 0x99, 0xca], "vfmadd132ss xmm1, xmm0, xmm2"); // no L'L==0 when not sae
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x99, 0xca], "vfmadd132ss xmm1{k5}, xmm0, xmm2"); // VFMADD132SS_XMMf32_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x28, 0x99, 0x0a], "vfmadd132ss xmm1, xmm0, dword [rdx]"); // VFMADD132SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x2d, 0x99, 0x0a], "vfmadd132ss xmm1{k5}, xmm0, dword [rdx]"); // VFMADD132SS_XMMf32_MASKmskw_XMMf32_MEMf32_AVX512, extension: AVX512EVEX
@@ -9141,6 +9233,8 @@ fn tests_66_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7d, 0x0d, 0xcf, 0x0a], "vgf2p8mulb xmm1{k5}, xmm0, xmmword [rdx]"); // VGF2P8MULB_XMMu8_MASKmskw_XMMu8_MEMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0xdc, 0xca], "vaesenc ymm1, ymm0, ymm2"); // VAESENC_YMMu128_YMMu128_YMMu128_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x28, 0xdc, 0x0a], "vaesenc ymm1, ymm0, ymmword [rdx]"); // VAESENC_YMMu128_YMMu128_MEMu128_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xfd, 0x38, 0xdc, 0x0a]); // no broadcast
+    test_invalid(&[0x62, 0xf2, 0xfd, 0xa8, 0xdc, 0x0a]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0xdc, 0xca], "vaesenc zmm1, zmm0, zmm2"); // VAESENC_ZMMu128_ZMMu128_ZMMu128_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x48, 0xdc, 0x0a], "vaesenc zmm1, zmm0, zmmword [rdx]"); // VAESENC_ZMMu128_ZMMu128_MEMu128_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfd, 0x08, 0xdc, 0xca], "vaesenc xmm1, xmm0, xmm2"); // VAESENC_XMMu128_XMMu128_XMMu128_AVX512, extension: AVX512EVEX
@@ -9171,6 +9265,7 @@ fn tests_f2_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x2d, 0x10, 0xca], "vpmovuswb xmm2{k5}, ymm1"); // VPMOVUSWB_XMMu8_MASKmskw_YMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x28, 0x10, 0x0a], "vpmovuswb xmmword [rdx], ymm1"); // VPMOVUSWB_MEMu8_MASKmskw_YMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x2d, 0x10, 0x0a], "vpmovuswb xmmword [rdx]{k5}, ymm1"); // VPMOVUSWB_MEMu8_MASKmskw_YMMu16_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7e, 0xad, 0x10, 0x0a]); // cannot set evex.z on stores.
     test_avx_full(&[0x62, 0xf2, 0x7e, 0xcd, 0x10, 0xca], "vpmovuswb ymm2{k5}{z}, zmm1"); // VPMOVUSWB_YMMu8_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x48, 0x10, 0xca], "vpmovuswb ymm2, zmm1"); // VPMOVUSWB_YMMu8_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x4d, 0x10, 0xca], "vpmovuswb ymm2{k5}, zmm1"); // VPMOVUSWB_YMMu8_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
@@ -9206,6 +9301,7 @@ fn tests_f2_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x4d, 0x12, 0xca], "vpmovusqb xmm2{k5}, zmm1"); // VPMOVUSQB_XMMu8_MASKmskw_ZMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x48, 0x12, 0x0a], "vpmovusqb qword [rdx], zmm1"); // VPMOVUSQB_MEMu8_MASKmskw_ZMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x4d, 0x12, 0x0a], "vpmovusqb qword [rdx]{k5}, zmm1"); // VPMOVUSQB_MEMu8_MASKmskw_ZMMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7e, 0xcd, 0x12, 0x0a]);
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x8d, 0x12, 0xca], "vpmovusqb xmm2{k5}{z}, xmm1"); // VPMOVUSQB_XMMu8_MASKmskw_XMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x08, 0x12, 0xca], "vpmovusqb xmm2, xmm1"); // VPMOVUSQB_XMMu8_MASKmskw_XMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x0d, 0x12, 0xca], "vpmovusqb xmm2{k5}, xmm1"); // VPMOVUSQB_XMMu8_MASKmskw_XMMu64_AVX512, extension: AVX512EVEX
@@ -9412,6 +9508,7 @@ fn tests_f2_0f38() {
     test_avx_full(&[0x62, 0xf2, 0xfe, 0x08, 0x28, 0xca], "vpmovm2w xmm1, k2"); // VPMOVM2W_XMMu16_MASKmskw_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x48, 0x28, 0xca], "vpmovm2b zmm1, k2"); // VPMOVM2B_ZMMu8_MASKmskw_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x08, 0x28, 0xca], "vpmovm2b xmm1, k2"); // VPMOVM2B_XMMu8_MASKmskw_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7e, 0x88, 0x28, 0xca]); //
     test_avx_full(&[0x62, 0xf2, 0xfe, 0x28, 0x29, 0xca], "vpmovw2m k1, ymm2"); // VPMOVW2M_MASKmskw_YMMu16_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x28, 0x29, 0xca], "vpmovb2m k1, ymm2"); // VPMOVB2M_MASKmskw_YMMu8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfe, 0x48, 0x29, 0xca], "vpmovw2m k1, zmm2"); // VPMOVW2M_MASKmskw_ZMMu16_AVX512, extension: AVX512EVEX
@@ -9519,6 +9616,7 @@ fn tests_f2_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x08, 0x38, 0xca], "vpmovm2d xmm1, k2"); // VPMOVM2D_XMMu32_MASKmskw_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfe, 0x28, 0x39, 0xca], "vpmovq2m k1, ymm2"); // VPMOVQ2M_MASKmskw_YMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x28, 0x39, 0xca], "vpmovd2m k1, ymm2"); // VPMOVD2M_MASKmskw_YMMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7e, 0xa8, 0x39, 0xca]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf2, 0xfe, 0x48, 0x39, 0xca], "vpmovq2m k1, zmm2"); // VPMOVQ2M_MASKmskw_ZMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xfe, 0x08, 0x39, 0xca], "vpmovq2m k1, xmm2"); // VPMOVQ2M_MASKmskw_XMMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x48, 0x39, 0xca], "vpmovd2m k1, zmm2"); // VPMOVD2M_MASKmskw_ZMMu32_AVX512, extension: AVX512EVEX
@@ -9526,6 +9624,7 @@ fn tests_f2_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x28, 0x3a, 0xca], "vpbroadcastmw2d ymm1, k2"); // VPBROADCASTMW2D_YMMu32_MASKu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x48, 0x3a, 0xca], "vpbroadcastmw2d zmm1, k2"); // VPBROADCASTMW2D_ZMMu32_MASKu32_AVX512CD, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x08, 0x3a, 0xca], "vpbroadcastmw2d xmm1, k2"); // VPBROADCASTMW2D_XMMu32_MASKu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7e, 0x88, 0x3a, 0xca]); // no zero "mask merge", no masking at all
     test_avx_full(&[0x62, 0xf2, 0x7e, 0xbd, 0x52, 0x0a], "vdpbf16ps ymm1{k5}{z}, ymm0, dword [rdx]{1to8}"); // VDPBF16PS_YMMf32_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x38, 0x52, 0x0a], "vdpbf16ps ymm1, ymm0, dword [rdx]{1to8}"); // VDPBF16PS_YMMf32_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x3d, 0x52, 0x0a], "vdpbf16ps ymm1{k5}, ymm0, dword [rdx]{1to8}"); // VDPBF16PS_YMMf32_MASKmskw_YMMu32_MEMu32_AVX512, extension: AVX512EVEX
@@ -9557,6 +9656,7 @@ fn tests_f2_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x38, 0x72, 0x0a], "vcvtneps2bf16 xmm1, dword [rdx]{1to8}"); // VCVTNEPS2BF16_XMMbf16_MASKmskw_MEMf32_AVX512_VL256, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x3d, 0x72, 0x0a], "vcvtneps2bf16 xmm1{k5}, dword [rdx]{1to8}"); // VCVTNEPS2BF16_XMMbf16_MASKmskw_MEMf32_AVX512_VL256, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0xad, 0x72, 0xca], "vcvtneps2bf16 xmm1{k5}{z}, ymm2"); // VCVTNEPS2BF16_XMMbf16_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7e, 0xbd, 0x72, 0xca]); // no register-register broadcast
     test_avx_full(&[0x62, 0xf2, 0x7e, 0xad, 0x72, 0x0a], "vcvtneps2bf16 xmm1{k5}{z}, ymmword [rdx]"); // VCVTNEPS2BF16_XMMbf16_MASKmskw_MEMf32_AVX512_VL256, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x28, 0x72, 0xca], "vcvtneps2bf16 xmm1, ymm2"); // VCVTNEPS2BF16_XMMbf16_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7e, 0x2d, 0x72, 0xca], "vcvtneps2bf16 xmm1{k5}, ymm2"); // VCVTNEPS2BF16_XMMbf16_MASKmskw_YMMf32_AVX512, extension: AVX512EVEX
@@ -9585,6 +9685,8 @@ fn tests_f2_0f38() {
 fn tests_f3_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7f, 0x08, 0x68, 0x0a], "vp2intersectd k1, xmm0, xmmword [rdx]"); // VP2INTERSECTD_MASKmskw_XMMu32_MEMu32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7f, 0x08, 0x68, 0xca], "vp2intersectd k1, xmm0, xmm2"); // VP2INTERSECTD_MASKmskw_XMMu32_XMMu32_AVX512, extension: AVX512EVEX
+    test_avx_full(&[0x62, 0xf2, 0x7f, 0x08, 0x68, 0xca], "vp2intersectd k1, xmm0, xmm2"); // VP2INTERSECTD_MASKmskw_XMMu32_XMMu32_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0x7f, 0x09, 0x68, 0xca]); // requires mask reg to be 000
     test_avx_full(&[0x62, 0xf2, 0x7f, 0x08, 0x72, 0x0a], "vcvtne2ps2bf16 xmm1, xmm0, xmmword [rdx]"); // VCVTNE2PS2BF16_XMMbf16_MASKmskw_XMMf32_MEMf32_AVX512_VL128, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7f, 0x08, 0x72, 0xca], "vcvtne2ps2bf16 xmm1, xmm0, xmm2"); // VCVTNE2PS2BF16_XMMbf16_MASKmskw_XMMf32_XMMf32_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0x7f, 0x0d, 0x72, 0x0a], "vcvtne2ps2bf16 xmm1{k5}, xmm0, xmmword [rdx]"); // VCVTNE2PS2BF16_XMMbf16_MASKmskw_XMMf32_MEMf32_AVX512_VL128, extension: AVX512EVEX
@@ -9639,6 +9741,7 @@ fn tests_f3_0f38() {
     test_avx_full(&[0x62, 0xf2, 0x7f, 0xdd, 0x72, 0x0a], "vcvtne2ps2bf16 zmm1{k5}{z}, zmm0, dword [rdx]{1to16}"); // VCVTNE2PS2BF16_ZMMbf16_MASKmskw_ZMMf32_MEMf32_AVX512_VL512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xff, 0x08, 0x68, 0x0a], "vp2intersectq k1, xmm0, xmmword [rdx]"); // VP2INTERSECTQ_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xff, 0x08, 0x68, 0xca], "vp2intersectq k1, xmm0, xmm2"); // VP2INTERSECTQ_MASKmskw_XMMu64_XMMu64_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf2, 0xff, 0x09, 0x68, 0xca]); // requires mask reg to be 000
     test_avx_full(&[0x62, 0xf2, 0xff, 0x18, 0x68, 0x0a], "vp2intersectq k1, xmm0, qword [rdx]{1to2}"); // VP2INTERSECTQ_MASKmskw_XMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xff, 0x28, 0x68, 0x0a], "vp2intersectq k1, ymm0, ymmword [rdx]"); // VP2INTERSECTQ_MASKmskw_YMMu64_MEMu64_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf2, 0xff, 0x28, 0x68, 0xca], "vp2intersectq k1, ymm0, ymm2"); // VP2INTERSECTQ_MASKmskw_YMMu64_YMMu64_AVX512, extension: AVX512EVEX
@@ -9653,6 +9756,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x38, 0x00, 0x0a, 0xcc], "vpermq ymm1, qword [rdx]{1to4}, 0xcc"); // VPERMQ_YMMu64_MASKmskw_MEMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x3d, 0x00, 0x0a, 0xcc], "vpermq ymm1{k5}, qword [rdx]{1to4}, 0xcc"); // VPERMQ_YMMu64_MASKmskw_MEMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x00, 0xca, 0xcc], "vpermq ymm1{k5}{z}, ymm2, 0xcc"); // VPERMQ_YMMu64_MASKmskw_YMMu64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0xbd, 0x00, 0xca, 0xcc]); // no broadcast on reg-reg ops
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x00, 0x0a, 0xcc], "vpermq ymm1{k5}{z}, ymmword [rdx], 0xcc"); // VPERMQ_YMMu64_MASKmskw_MEMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x00, 0xca, 0xcc], "vpermq ymm1, ymm2, 0xcc"); // VPERMQ_YMMu64_MASKmskw_YMMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x00, 0xca, 0xcc], "vpermq ymm1{k5}, ymm2, 0xcc"); // VPERMQ_YMMu64_MASKmskw_YMMu64_IMM8_AVX512, extension: AVX512EVEX
@@ -9743,6 +9847,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x38, 0x04, 0x0a, 0xcc], "vpermilps ymm1, dword [rdx]{1to8}, 0xcc"); // VPERMILPS_YMMf32_MASKmskw_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x3d, 0x04, 0x0a, 0xcc], "vpermilps ymm1{k5}, dword [rdx]{1to8}, 0xcc"); // VPERMILPS_YMMf32_MASKmskw_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xad, 0x04, 0xca, 0xcc], "vpermilps ymm1{k5}{z}, ymm2, 0xcc"); // VPERMILPS_YMMf32_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0xbd, 0x04, 0xca, 0xcc]); // no broadcast on reg sources
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xad, 0x04, 0x0a, 0xcc], "vpermilps ymm1{k5}{z}, ymmword [rdx], 0xcc"); // VPERMILPS_YMMf32_MASKmskw_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x04, 0xca, 0xcc], "vpermilps ymm1, ymm2, 0xcc"); // VPERMILPS_YMMf32_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x04, 0xca, 0xcc], "vpermilps ymm1{k5}, ymm2, 0xcc"); // VPERMILPS_YMMf32_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
@@ -9858,6 +9963,8 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x7d, 0x0a, 0xca, 0xcc], "vrndscaless xmm1{k5}{sae}, xmm0, xmm2, 0xcc"); // VRNDSCALESS_XMMf32_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xad, 0x0a, 0xca, 0xcc], "vrndscaless xmm1{k5}{z}, xmm0, xmm2, 0xcc"); // VRNDSCALESS_XMMf32_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xad, 0x0a, 0x0a, 0xcc], "vrndscaless xmm1{k5}{z}, xmm0, dword [rdx], 0xcc"); // VRNDSCALESS_XMMf32_MASKmskw_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x5d, 0x0a, 0x0a, 0xcc]); // no broadcast with memory source
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x6d, 0x0a, 0x0a, 0xcc]); // no broadcast with memory source
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x0a, 0xca, 0xcc], "vrndscaless xmm1, xmm0, xmm2, 0xcc"); // VRNDSCALESS_XMMf32_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x0a, 0xca, 0xcc], "vrndscaless xmm1{k5}, xmm0, xmm2, 0xcc"); // VRNDSCALESS_XMMf32_MASKmskw_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x0a, 0x0a, 0xcc], "vrndscaless xmm1, xmm0, dword [rdx], 0xcc"); // VRNDSCALESS_XMMf32_MASKmskw_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
@@ -9866,16 +9973,21 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x78, 0x0b, 0xca, 0xcc], "vrndscalesd xmm1{sae}, xmm0, xmm2, 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x7d, 0x0b, 0xca, 0xcc], "vrndscalesd xmm1{k5}{sae}, xmm0, xmm2, 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x0b, 0xca, 0xcc], "vrndscalesd xmm1{k5}{z}, xmm0, xmm2, 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0xa8, 0x0b, 0xca, 0xcc]); // no zero-merge without mask reg
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x0b, 0x0a, 0xcc], "vrndscalesd xmm1{k5}{z}, xmm0, qword [rdx], 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x0b, 0xca, 0xcc], "vrndscalesd xmm1, xmm0, xmm2, 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x0b, 0xca, 0xcc], "vrndscalesd xmm1{k5}, xmm0, xmm2, 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x0b, 0x0a, 0xcc], "vrndscalesd xmm1, xmm0, qword [rdx], 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x38, 0x0b, 0x0a, 0xcc]); // no broadcast on memory source
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x68, 0x0b, 0x0a, 0xcc]); // L'L==11 requires sae
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x0b, 0x0a, 0xcc], "vrndscalesd xmm1{k5}, xmm0, qword [rdx], 0xcc"); // VRNDSCALESD_XMMf64_MASKmskw_XMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x0f, 0xca, 0xcc], "vpalignr ymm1{k5}{z}, ymm0, ymm2, 0xcc"); // VPALIGNR_YMMu8_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x0f, 0x0a, 0xcc], "vpalignr ymm1{k5}{z}, ymm0, ymmword [rdx], 0xcc"); // VPALIGNR_YMMu8_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x0f, 0xca, 0xcc], "vpalignr ymm1, ymm0, ymm2, 0xcc"); // VPALIGNR_YMMu8_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x0f, 0xca, 0xcc], "vpalignr ymm1{k5}, ymm0, ymm2, 0xcc"); // VPALIGNR_YMMu8_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x3d, 0x0f, 0xca, 0xcc]); // no broadcast
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x0f, 0x0a, 0xcc], "vpalignr ymm1, ymm0, ymmword [rdx], 0xcc"); // VPALIGNR_YMMu8_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x38, 0x0f, 0x0a, 0xcc]); // still no broadcast
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x0f, 0x0a, 0xcc], "vpalignr ymm1{k5}, ymm0, ymmword [rdx], 0xcc"); // VPALIGNR_YMMu8_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xcd, 0x0f, 0xca, 0xcc], "vpalignr zmm1{k5}{z}, zmm0, zmm2, 0xcc"); // VPALIGNR_ZMMu8_MASKmskw_ZMMu8_ZMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xcd, 0x0f, 0x0a, 0xcc], "vpalignr zmm1{k5}{z}, zmm0, zmmword [rdx], 0xcc"); // VPALIGNR_ZMMu8_MASKmskw_ZMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
@@ -9890,14 +10002,22 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x0f, 0x0a, 0xcc], "vpalignr xmm1, xmm0, xmmword [rdx], 0xcc"); // VPALIGNR_XMMu8_MASKmskw_XMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x0d, 0x0f, 0x0a, 0xcc], "vpalignr xmm1{k5}, xmm0, xmmword [rdx], 0xcc"); // VPALIGNR_XMMu8_MASKmskw_XMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x14, 0xca, 0xcc], "vpextrb edx, xmm1, 0xcc"); // VPEXTRB_GPR32u8_XMMu8_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x88, 0x14, 0xca, 0xcc]); // no zero mask-merge, no masking!
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x18, 0x14, 0xca, 0xcc]); // no broadcast
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x14, 0x0a, 0xcc], "vpextrb byte [rdx], xmm1, 0xcc"); // VPEXTRB_MEMu8_XMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x15, 0xca, 0xcc], "vpextrw edx, xmm1, 0xcc"); // VPEXTRW_GPR32u16_XMMu16_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x18, 0x15, 0xca, 0xcc]); // no broadcast
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x88, 0x15, 0xca, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x15, 0x0a, 0xcc], "vpextrw word [rdx], xmm1, 0xcc"); // VPEXTRW_MEMu16_XMMu16_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x16, 0xca, 0xcc], "vpextrq rdx, xmm1, 0xcc"); // VPEXTRQ_GPR64u64_XMMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x16, 0x0a, 0xcc], "vpextrq qword [rdx], xmm1, 0xcc"); // VPEXTRQ_MEMu64_XMMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x16, 0xca, 0xcc], "vpextrd edx, xmm1, 0xcc"); // VPEXTRD_GPR32u32_XMMu32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x18, 0x16, 0xca, 0xcc]); // no broadcast
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x88, 0x16, 0xca, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x16, 0x0a, 0xcc], "vpextrd dword [rdx], xmm1, 0xcc"); // VPEXTRD_MEMu32_XMMu32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x17, 0xca, 0xcc], "vextractps edx, xmm1, 0xcc"); // VEXTRACTPS_GPR32f32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x18, 0x17, 0xca, 0xcc]); // no broadcast
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x88, 0x17, 0xca, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x17, 0x0a, 0xcc], "vextractps dword [rdx], xmm1, 0xcc"); // VEXTRACTPS_MEMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x18, 0xca, 0xcc], "vinsertf64x2 ymm1{k5}{z}, ymm0, xmm2, 0xcc"); // VINSERTF64X2_YMMf64_MASKmskw_YMMf64_XMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xad, 0x18, 0x0a, 0xcc], "vinsertf64x2 ymm1{k5}{z}, ymm0, xmmword [rdx], 0xcc"); // VINSERTF64X2_YMMf64_MASKmskw_YMMf64_MEMf64_IMM8_AVX512, extension: AVX512EVEX
@@ -9933,6 +10053,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x19, 0xca, 0xcc], "vextractf32x4 xmm2{k5}, ymm1, 0xcc"); // VEXTRACTF32X4_XMMf32_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x19, 0x0a, 0xcc], "vextractf32x4 xmmword [rdx], ymm1, 0xcc"); // VEXTRACTF32X4_MEMf32_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x19, 0x0a, 0xcc], "vextractf32x4 xmmword [rdx]{k5}, ymm1, 0xcc"); // VEXTRACTF32X4_MEMf32_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x3d, 0x19, 0x0a, 0xcc]); // no zero-merge with memmory dest
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xcd, 0x19, 0xca, 0xcc], "vextractf64x2 xmm2{k5}{z}, zmm1, 0xcc"); // VEXTRACTF64X2_XMMf64_MASKmskw_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x48, 0x19, 0xca, 0xcc], "vextractf64x2 xmm2, zmm1, 0xcc"); // VEXTRACTF64X2_XMMf64_MASKmskw_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x4d, 0x19, 0xca, 0xcc], "vextractf64x2 xmm2{k5}, zmm1, 0xcc"); // VEXTRACTF64X2_XMMf64_MASKmskw_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
@@ -9965,6 +10086,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x4d, 0x1b, 0xca, 0xcc], "vextractf32x8 ymm2{k5}, zmm1, 0xcc"); // VEXTRACTF32X8_YMMf32_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x48, 0x1b, 0x0a, 0xcc], "vextractf32x8 ymmword [rdx], zmm1, 0xcc"); // VEXTRACTF32X8_MEMf32_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x4d, 0x1b, 0x0a, 0xcc], "vextractf32x8 ymmword [rdx]{k5}, zmm1, 0xcc"); // VEXTRACTF32X8_MEMf32_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0xcd, 0x1b, 0x0a, 0xcc]); // no zero-merge into memory
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xfd, 0x1d, 0xca, 0xcc], "vcvtps2ph ymm2{k5}{z}{sae}, zmm1, 0xcc"); // VCVTPS2PH_YMMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x78, 0x1d, 0xca, 0xcc], "vcvtps2ph ymm2{sae}, zmm1, 0xcc"); // VCVTPS2PH_YMMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x7d, 0x1d, 0xca, 0xcc], "vcvtps2ph ymm2{k5}{sae}, zmm1, 0xcc"); // VCVTPS2PH_YMMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
@@ -9973,7 +10095,9 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x1d, 0xca, 0xcc], "vcvtps2ph xmm2{k5}, ymm1, 0xcc"); // VCVTPS2PH_XMMf16_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x1d, 0x0a, 0xcc], "vcvtps2ph xmmword [rdx], ymm1, 0xcc"); // VCVTPS2PH_MEMf16_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x1d, 0x0a, 0xcc], "vcvtps2ph xmmword [rdx]{k5}, ymm1, 0xcc"); // VCVTPS2PH_MEMf16_MASKmskw_YMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x3d, 0x1d, 0x0a, 0xcc]); // no zero-merge into memory
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xcd, 0x1d, 0xca, 0xcc], "vcvtps2ph ymm2{k5}{z}, zmm1, 0xcc"); // VCVTPS2PH_YMMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x6d, 0x1d, 0x0a, 0xcc]); // no L'L==11 for non-sae
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x48, 0x1d, 0xca, 0xcc], "vcvtps2ph ymm2, zmm1, 0xcc"); // VCVTPS2PH_YMMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x4d, 0x1d, 0xca, 0xcc], "vcvtps2ph ymm2{k5}, zmm1, 0xcc"); // VCVTPS2PH_YMMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x48, 0x1d, 0x0a, 0xcc], "vcvtps2ph ymmword [rdx], zmm1, 0xcc"); // VCVTPS2PH_MEMf16_MASKmskw_ZMMf32_IMM8_AVX512, extension: AVX512EVEX
@@ -10056,10 +10180,16 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x1f, 0x0a, 0xcc], "vpcmpd k1, xmm0, xmmword [rdx], 0xcc"); // VPCMPD_MASKmskw_MASKmskw_XMMi32_MEMi32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x0d, 0x1f, 0x0a, 0xcc], "vpcmpd k1{k5}, xmm0, xmmword [rdx], 0xcc"); // VPCMPD_MASKmskw_MASKmskw_XMMi32_MEMi32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x20, 0xca, 0xcc], "vpinsrb xmm1, xmm0, edx, 0xcc"); // VPINSRB_XMMu8_XMMu8_GPR32u8_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x18, 0x20, 0xca, 0xcc]); //
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x88, 0x20, 0xca, 0xcc]); //
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x20, 0x0a, 0xcc], "vpinsrb xmm1, xmm0, byte [rdx], 0xcc"); // VPINSRB_XMMu8_XMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x21, 0xca, 0xcc], "vinsertps xmm1, xmm0, xmm2, 0xcc"); // VINSERTPS_XMMf32_XMMf32_XMMf32_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x18, 0x21, 0xca, 0xcc]); //
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x88, 0x21, 0xca, 0xcc]); //
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x21, 0x0a, 0xcc], "vinsertps xmm1, xmm0, dword [rdx], 0xcc"); // VINSERTPS_XMMf32_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x22, 0xca, 0xcc], "vpinsrq xmm1, xmm0, rdx, 0xcc"); // VPINSRQ_XMMu64_XMMu64_GPR64u64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x18, 0x22, 0xca, 0xcc]); //
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x88, 0x22, 0xca, 0xcc]); //
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x22, 0x0a, 0xcc], "vpinsrq xmm1, xmm0, qword [rdx], 0xcc"); // VPINSRQ_XMMu64_XMMu64_MEMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x22, 0xca, 0xcc], "vpinsrd xmm1, xmm0, edx, 0xcc"); // VPINSRD_XMMu32_XMMu32_GPR32u32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x08, 0x22, 0x0a, 0xcc], "vpinsrd xmm1, xmm0, dword [rdx], 0xcc"); // VPINSRD_XMMu32_XMMu32_MEMu32_IMM8_AVX512, extension: AVX512EVEX
@@ -10303,6 +10433,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x3e, 0x0a, 0xcc], "vpcmpuw k1{k5}, ymm0, ymmword [rdx], 0xcc"); // VPCMPUW_MASKmskw_MASKmskw_YMMu16_MEMu16_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x3e, 0xca, 0xcc], "vpcmpub k1, ymm0, ymm2, 0xcc"); // VPCMPUB_MASKmskw_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x3e, 0xca, 0xcc], "vpcmpub k1{k5}, ymm0, ymm2, 0xcc"); // VPCMPUB_MASKmskw_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0xad, 0x3e, 0xca, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x3e, 0x0a, 0xcc], "vpcmpub k1, ymm0, ymmword [rdx], 0xcc"); // VPCMPUB_MASKmskw_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x3e, 0x0a, 0xcc], "vpcmpub k1{k5}, ymm0, ymmword [rdx], 0xcc"); // VPCMPUB_MASKmskw_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x48, 0x3e, 0xca, 0xcc], "vpcmpuw k1, zmm0, zmm2, 0xcc"); // VPCMPUW_MASKmskw_MASKmskw_ZMMu16_ZMMu16_IMM8_AVX512, extension: AVX512EVEX
@@ -10350,6 +10481,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x42, 0xca, 0xcc], "vdbpsadbw ymm1, ymm0, ymm2, 0xcc"); // VDBPSADBW_YMMu16_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x42, 0xca, 0xcc], "vdbpsadbw ymm1{k5}, ymm0, ymm2, 0xcc"); // VDBPSADBW_YMMu16_MASKmskw_YMMu8_YMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x28, 0x42, 0x0a, 0xcc], "vdbpsadbw ymm1, ymm0, ymmword [rdx], 0xcc"); // VDBPSADBW_YMMu16_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0x7d, 0x38, 0x42, 0x0a, 0xcc]); // no broadcast
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x42, 0x0a, 0xcc], "vdbpsadbw ymm1{k5}, ymm0, ymmword [rdx], 0xcc"); // VDBPSADBW_YMMu16_MASKmskw_YMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xcd, 0x42, 0xca, 0xcc], "vdbpsadbw zmm1{k5}{z}, zmm0, zmm2, 0xcc"); // VDBPSADBW_ZMMu16_MASKmskw_ZMMu8_ZMMu8_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0xcd, 0x42, 0x0a, 0xcc], "vdbpsadbw zmm1{k5}{z}, zmm0, zmmword [rdx], 0xcc"); // VDBPSADBW_ZMMu16_MASKmskw_ZMMu8_MEMu8_IMM8_AVX512, extension: AVX512EVEX
@@ -10400,11 +10532,14 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x48, 0x43, 0x0a, 0xcc], "vshufi32x4 zmm1, zmm0, zmmword [rdx], 0xcc"); // VSHUFI32X4_ZMMu32_MASKmskw_ZMMu32_MEMu32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x4d, 0x43, 0x0a, 0xcc], "vshufi32x4 zmm1{k5}, zmm0, zmmword [rdx], 0xcc"); // VSHUFI32X4_ZMMu32_MASKmskw_ZMMu32_MEMu32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x44, 0xca, 0xcc], "vpclmulqdq ymm1, ymm0, ymm2, 0xcc"); // VPCLMULQDQ_YMMu128_YMMu64_YMMu64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x29, 0x44, 0xca, 0xcc]); // mask reg must be 000
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x44, 0x0a, 0xcc], "vpclmulqdq ymm1, ymm0, ymmword [rdx], 0xcc"); // VPCLMULQDQ_YMMu128_YMMu64_MEMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x48, 0x44, 0xca, 0xcc], "vpclmulqdq zmm1, zmm0, zmm2, 0xcc"); // VPCLMULQDQ_ZMMu128_ZMMu64_ZMMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x48, 0x44, 0x0a, 0xcc], "vpclmulqdq zmm1, zmm0, zmmword [rdx], 0xcc"); // VPCLMULQDQ_ZMMu128_ZMMu64_MEMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x44, 0xca, 0xcc], "vpclmulqdq xmm1, xmm0, xmm2, 0xcc"); // VPCLMULQDQ_XMMu128_XMMu64_XMMu64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x08, 0x44, 0x0a, 0xcc], "vpclmulqdq xmm1, xmm0, xmmword [rdx], 0xcc"); // VPCLMULQDQ_XMMu128_XMMu64_MEMu64_IMM8_AVX512, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x18, 0x44, 0x0a, 0xcc]); //
+    test_invalid(&[0x62, 0xf3, 0xfd, 0x88, 0x44, 0x0a, 0xcc]); //
     test_avx_full(&[0x62, 0xf3, 0xfd, 0xfd, 0x50, 0xca, 0xcc], "vrangepd zmm1{k5}{z}{sae}, zmm0, zmm2, 0xcc"); // VRANGEPD_ZMMf64_MASKmskw_ZMMf64_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x78, 0x50, 0xca, 0xcc], "vrangepd zmm1{sae}, zmm0, zmm2, 0xcc"); // VRANGEPD_ZMMf64_MASKmskw_ZMMf64_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x7d, 0x50, 0xca, 0xcc], "vrangepd zmm1{k5}{sae}, zmm0, zmm2, 0xcc"); // VRANGEPD_ZMMf64_MASKmskw_ZMMf64_ZMMf64_IMM8_AVX512, extension: AVX512EVEX
@@ -10641,6 +10776,7 @@ fn tests_66_0f3a() {
     test_avx_full(&[0x62, 0xf3, 0x7d, 0x2d, 0x57, 0x0a, 0xcc], "vreducess xmm1{k5}, xmm0, dword [rdx], 0xcc"); // VREDUCESS_XMMf32_MASKmskw_XMMf32_MEMf32_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x38, 0x66, 0x0a, 0xcc], "vfpclasspd k1, qword [rdx]{1to4}, 0xcc"); // VFPCLASSPD_MASKmskw_MASKmskw_MEMf64_IMM8_AVX512_VL256, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x3d, 0x66, 0x0a, 0xcc], "vfpclasspd k1{k5}, qword [rdx]{1to4}, 0xcc"); // VFPCLASSPD_MASKmskw_MASKmskw_MEMf64_IMM8_AVX512_VL256, extension: AVX512EVEX
+    test_invalid(&[0x62, 0xf3, 0xfd, 0xbd, 0x66, 0x0a, 0xcc]); // no zero mask-merge
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x66, 0xca, 0xcc], "vfpclasspd k1, ymm2, 0xcc"); // VFPCLASSPD_MASKmskw_MASKmskw_YMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x2d, 0x66, 0xca, 0xcc], "vfpclasspd k1{k5}, ymm2, 0xcc"); // VFPCLASSPD_MASKmskw_MASKmskw_YMMf64_IMM8_AVX512, extension: AVX512EVEX
     test_avx_full(&[0x62, 0xf3, 0xfd, 0x28, 0x66, 0x0a, 0xcc], "vfpclasspd k1, ymmword [rdx], 0xcc"); // VFPCLASSPD_MASKmskw_MASKmskw_MEMf64_IMM8_AVX512_VL256, extension: AVX512EVEX

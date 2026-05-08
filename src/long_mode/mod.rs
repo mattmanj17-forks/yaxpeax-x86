@@ -134,10 +134,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for x87 register `st(num)`
     #[inline]
-    pub fn st(num: u8) -> RegSpec {
-        if num >= 8 {
-            panic!("invalid x87 reg st({})", num);
-        }
+    pub const fn st(num: u8) -> RegSpec {
+        assert!(num < 8, "invalid x87 reg");
 
         RegSpec {
             num,
@@ -147,10 +145,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for xmm reg `num`
     #[inline]
-    pub fn xmm(num: u8) -> RegSpec {
-        if num >= 32 {
-            panic!("invalid x86 xmm reg {}", num);
-        }
+    pub const fn xmm(num: u8) -> RegSpec {
+        assert!(num < 32, "invalid x86 xmm reg");
 
         RegSpec {
             num,
@@ -160,10 +156,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for ymm reg `num`
     #[inline]
-    pub fn ymm(num: u8) -> RegSpec {
-        if num >= 32 {
-            panic!("invalid x86 ymm reg {}", num);
-        }
+    pub const fn ymm(num: u8) -> RegSpec {
+        assert!(num < 32, "invalid x86 ymm reg");
 
         RegSpec {
             num,
@@ -173,10 +167,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for zmm reg `num`
     #[inline]
-    pub fn zmm(num: u8) -> RegSpec {
-        if num >= 32 {
-            panic!("invalid x86 zmm reg {}", num);
-        }
+    pub const fn zmm(num: u8) -> RegSpec {
+        assert!(num < 32, "invalid x86 zmm reg");
 
         RegSpec {
             num,
@@ -186,10 +178,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for qword reg `num`
     #[inline]
-    pub fn q(num: u8) -> RegSpec {
-        if num >= 16 {
-            panic!("invalid x86 qword reg {}", num);
-        }
+    pub const fn q(num: u8) -> RegSpec {
+        assert!(num < 16, "invalid x86 qword reg");
 
         RegSpec {
             num,
@@ -199,10 +189,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for mask reg `num`
     #[inline]
-    pub fn mask(num: u8) -> RegSpec {
-        if num >= 8 {
-            panic!("invalid x86 mask reg {}", num);
-        }
+    pub const fn mask(num: u8) -> RegSpec {
+        assert!(num < 8, "invalid x86 mask reg");
 
         RegSpec {
             num,
@@ -212,10 +200,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for dword reg `num`
     #[inline]
-    pub fn d(num: u8) -> RegSpec {
-        if num >= 16 {
-            panic!("invalid x86 dword reg {}", num);
-        }
+    pub const fn d(num: u8) -> RegSpec {
+        assert!(num < 16, "invalid x86 dword reg");
 
         RegSpec {
             num,
@@ -225,10 +211,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for word reg `num`
     #[inline]
-    pub fn w(num: u8) -> RegSpec {
-        if num >= 16 {
-            panic!("invalid x86 word reg {}", num);
-        }
+    pub const fn w(num: u8) -> RegSpec {
+        assert!(num < 16, "invalid x86 word reg");
 
         RegSpec {
             num,
@@ -238,10 +222,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for non-rex byte reg `num`
     #[inline]
-    pub fn rb(num: u8) -> RegSpec {
-        if num >= 16 {
-            panic!("invalid x86 rex-byte reg {}", num);
-        }
+    pub const fn rb(num: u8) -> RegSpec {
+        assert!(num < 16, "invalid x86 rex-byte reg");
 
         let bank = if num < 4 {
             RegisterBank::B
@@ -257,10 +239,8 @@ impl RegSpec {
 
     /// construct a `RegSpec` for non-rex byte reg `num`
     #[inline]
-    pub fn b(num: u8) -> RegSpec {
-        if num >= 8 {
-            panic!("invalid x86 non-rex byte reg {}", num);
-        }
+    pub const fn b(num: u8) -> RegSpec {
+        assert!(num < 8, "invalid x86 non-rex-byte reg");
 
         RegSpec {
             num,
