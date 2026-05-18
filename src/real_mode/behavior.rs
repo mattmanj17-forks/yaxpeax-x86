@@ -1,4 +1,4 @@
-//! behavior information for x86-64 instructions.
+//! behavior information for x86-16 instructions.
 //!
 //! this module allows users of yaxpeax-x86 to collect operand read/write information about
 //! instructions ([`InstBehavior::operand_access()`]), as well as allowed execution level
@@ -10,23 +10,27 @@
 //! extern crate alloc;
 //!
 //! use yaxpeax_x86::Access;
-//! use yaxpeax_x86::long_mode::{InstDecoder, Operand, RegSpec};
+//! use yaxpeax_x86::real_mode::{InstDecoder, Operand, RegSpec};
 //!
-//! // `3300` is "xor eax, dword [rax]"
+//! // `3300` is "xor ax, word [bx + si * 1]"
 //! let bytes = &[0x33, 0x00];
 //! let inst = InstDecoder::default().decode_slice(bytes).expect("can decode trivial instructions");
 //!
 //! #[cfg(feature="fmt")]
-//! assert_eq!(inst.to_string(), "xor eax, dword [rax]");
+//! assert_eq!(inst.to_string(), "xor ax, word [bx + si * 1]");
 //!
 //! let behavior = inst.behavior();
-//! let operands = behavior.all_operands().expect("xor eax, eax is not complex");
+//! let operands = behavior.all_operands().expect("xor ax, [bx + si] is not complex");
 //!
 //! let collected: alloc::vec::Vec<(Operand, Access)> = operands.iter().collect();
 //! let expected = alloc::vec![
-//!     (Operand::Register { reg: RegSpec::rflags() }, Access::Write),
-//!     (Operand::Register { reg: RegSpec::eax() }, Access::ReadWrite),
-//!     (Operand::MemDeref { base: RegSpec::rax() }, Access::Read),
+//!     (Operand::Register { reg: RegSpec::eflags() }, Access::Write),
+//!     (Operand::Register { reg: RegSpec::ax() }, Access::ReadWrite),
+//!     (Operand::MemBaseIndexScale {
+//!         base: RegSpec::bx(),
+//!         index: RegSpec::si(),
+//!         scale: 1
+//!     }, Access::Read),
 //! ];
 //! assert_eq!(collected, expected);
 //!
@@ -53,6 +57,14 @@
 //! interfaces here, first: thank you!! please report any issues, and second: consider pinning to a
 //! specific minor version while setting `feature = ["unstable"]` if instruction behavior becoming
 //! more correct might present an issue in your application.
+//!
+//! ## differences from x86-64 and x86-32
+//!
+//! `ip` and `flags` as described in this module may appear in surprising ways, particularly as
+//! they are reported in implicit operands: in some cases the corresponding instructions *can*
+//! consume the wider forms of these registers with a `66`/operand-size override. library embedding
+//! software must carefully consider if registers should be truncated to 16 bits (particularly on
+//! reads) or preserved in 32-bit for.
 
 use super::{Instruction, Opcode, Operand, OperandSpec};
 use super::RegSpec;
@@ -75,9 +87,9 @@ use crate::behavior::{Exception, ExceptionInfo, PrivilegeLevel};
 ///   [`InstBehavior::exceptions()`].
 /// * x86 instructions have the familiar operands from textual disassembly, but many instructions
 ///   have other implied operands. in some cases the implied operand is a second memory-accessing
-///   operation (consider `call qword [rcx]`; `qword [rcx]` is one memory access, but the implied
+///   operation (consider `call word [bx + si]`; `word [bx + si]` is one memory access, but the implied
 ///   push of a return address is a second memory operation).
-/// * `{,e,r}flags` is often written and sometimes read, but almost never as an explicit source or
+/// * `{,e}flags` is often written and sometimes read, but almost never as an explicit source or
 ///   destination operand. this can be queried with [`InstBehavior::flags_access()`].
 ///
 /// it's also useful to know if implicit and explicit operands are reads, writes, or both, such as
@@ -97,7 +109,7 @@ impl Instruction {
     /// additional semantics not easily expressed by this library".
     ///
     /// see the documentation for [`InstBehavior`] as well as the
-    /// [`behavior`][crate::long_mode::behavior] module for more information.
+    /// [`behavior`][crate::real_mode::behavior] module for more information.
     pub fn behavior<'inst>(&'inst self) -> InstBehavior<'inst> {
         let mut behavior = opcode2behavior(&self.opcode);
 
@@ -113,8 +125,7 @@ impl Instruction {
                 let ops_idx = match op_width {
                     1 => MUL_IDX_1OP_BYTE,
                     2 => MUL_IDX_1OP_WORD,
-                    4 => MUL_IDX_1OP_DWORD,
-                    _ /* 8 */ => MUL_IDX_1OP_QWORD,
+                    _ /* 4 */ => MUL_IDX_1OP_DWORD,
                 };
                 behavior = behavior
                     .set_implicit_ops(ops_idx);
@@ -129,6 +140,22 @@ impl Instruction {
                         .set_operand(1, Access::Read)
                         .set_operand(2, Access::Read);
                 }
+            } else if self.opcode == Opcode::PUSHA {
+                if self.prefixes.operand_size() {
+                    behavior = behavior
+                        .set_implicit_ops(PUSHAD_IDX);
+                } else {
+                    behavior = behavior
+                        .set_implicit_ops(PUSHA_IDX);
+                }
+            } else if self.opcode == Opcode::POPA {
+                if self.prefixes.operand_size() {
+                    behavior = behavior
+                        .set_implicit_ops(POPAD_IDX);
+                } else {
+                    behavior = behavior
+                        .set_implicit_ops(POPA_IDX);
+                }
             } else if self.opcode == Opcode::DIV || self.opcode == Opcode::IDIV {
                 let op_width = if self.operands[0] == OperandSpec::RegMMM {
                     self.regs[1].width()
@@ -138,8 +165,7 @@ impl Instruction {
                 let ops_idx = match op_width {
                     1 => DIV_IDX_1OP_BYTE,
                     2 => DIV_IDX_1OP_WORD,
-                    4 => DIV_IDX_1OP_DWORD,
-                    _ /* 8 */ => DIV_IDX_1OP_QWORD,
+                    _ /* 4 */ => DIV_IDX_1OP_DWORD,
                 };
                 behavior = behavior
                     .set_implicit_ops(ops_idx);
@@ -195,6 +221,8 @@ impl Instruction {
                 }
             } else if self.opcode() == Opcode::MULX {
                 // `mulx` is always vex-encoded.
+                //
+                // TODO: vex.w is UD in 32-bit code, right?
                 if self.prefixes.vex_unchecked().w() {
                     behavior = behavior
                         .set_implicit_ops(MULX_64B_IDX);
@@ -209,7 +237,7 @@ impl Instruction {
                         .set_implicit_ops(EDI_MEMWRITE_IDX);
                 } else {
                     behavior = behavior
-                        .set_implicit_ops(RDI_MEMWRITE_IDX);
+                        .set_implicit_ops(DI_MEMWRITE_IDX);
                 }
             } else if self.opcode() == Opcode::PCMPESTRI || self.opcode() == Opcode::VPCMPESTRI {
                 if self.prefixes.vex_unchecked().w() {
@@ -230,11 +258,8 @@ impl Instruction {
             } else if self.opcode() == Opcode::LOOPNZ
                 || self.opcode() == Opcode::LOOPZ
                 || self.opcode() == Opcode::LOOP
-                || self.opcode() == Opcode::JRCXZ {
-               if self.prefixes.rex_unchecked().w() {
-                   behavior = behavior
-                       .set_implicit_ops(RW_RCX_IDX);
-               } else if self.prefixes.operand_size() {
+                || self.opcode() == Opcode::JCXZ {
+               if !self.prefixes.operand_size() {
                    behavior = behavior
                        .set_implicit_ops(RW_CX_IDX);
                } else {
@@ -321,7 +346,7 @@ impl<'inst> Iterator for AccessIter<'inst> {
                 self.next += 1;
                 if let Some(acc) = self.operands.inst.flags_access() {
                     if acc != Access::None {
-                        return Some((Operand::Register { reg: RegSpec::rflags() }, acc));
+                        return Some((Operand::Register { reg: RegSpec::eflags() }, acc));
                     }
                 }
             } else {
@@ -399,12 +424,12 @@ impl ImplicitOperand {
                 Operand::MemDeref { base: self.reg }
             }
             OperandSpec::Disp => {
-                Operand::Disp { base: self.reg, disp: self.disp }
+                Operand::MemDisp { base: self.reg, disp: self.disp }
             }
-            OperandSpec::Deref_rdi => {
-                Operand::MemDeref { base: RegSpec::rdi() }
+            OperandSpec::Deref_edi => {
+                Operand::MemDeref { base: RegSpec::edi() }
             }
-            // from `xlat` specifically... `base` specifies rbx, infer ax as the index here.
+            // from `xlat` specifically... `base` specifies bx, infer ax as the index here.
             OperandSpec::MemIndexScale => {
                 Operand::MemBaseIndexScale {
                     base: self.reg,
@@ -589,12 +614,19 @@ impl<'inst> InstBehavior<'inst> {
     /// `visit_accesses()` is slightly more efficient in this than iterating `all_operands()` as
     /// well, as it uses unstable internal representations directly, rather than converting to API
     /// types and back for every operand.
+    ///
+    /// NOTE: unlike [`yaxpeax_x86::long_mode::InstBehavior::visit_accesses`] or
+    /// [`yaxpeax_x86::protected_mode::InstBehavior::visit_accesses`] this is only accessible with
+    /// `feature = "unstable"`; the address calculation and default access segments are not well
+    /// tested in 16-bit mode. in particular, `ds` is generally assumed to be the accessed segment
+    /// for address calculation, while instructions with different default segments are understood
+    /// on a best-effort basis.
     pub fn visit_accesses<T: AccessVisitor>(&self, v: &mut T) -> Result<(), ComplexOp> {
         if let Some(op) = self.as_complex_op() {
             return Err(op);
         }
 
-        fn compute_addr<T: AccessVisitor>(v: &mut T, inst: &Instruction, op_spec: OperandSpec) -> Option<u64> {
+        fn compute_addr<T: AccessVisitor>(v: &mut T, inst: &Instruction, op_spec: OperandSpec) -> Option<u16> {
             #[cfg(feature = "_debug_internal_asserts")]
             if !op_spec.is_memory() {
                 panic!("expected memory operand but got {:?}", op_spec);
@@ -605,54 +637,54 @@ impl<'inst> InstBehavior<'inst> {
                 OperandSpec::Deref_mask => {
                     v.get_register(inst.regs[1])
                 }
-                OperandSpec::Deref_rdi => {
-                    v.get_register(RegSpec::rdi())
-                }
-                OperandSpec::Deref_rsi => {
-                    v.get_register(RegSpec::rsi())
-                }
                 OperandSpec::Deref_edi => {
                     v.get_register(RegSpec::edi())
                 }
                 OperandSpec::Deref_esi => {
                     v.get_register(RegSpec::esi())
                 }
+                OperandSpec::Deref_di => {
+                    v.get_register(RegSpec::di())
+                }
+                OperandSpec::Deref_si => {
+                    v.get_register(RegSpec::si())
+                }
                 OperandSpec::Disp => {
                     let base = v.get_register(inst.regs[1]);
-                    base.map(|addr| addr.wrapping_add(inst.disp as i32 as i64 as u64))
+                    base.map(|addr| addr.wrapping_add(inst.disp as u16))
                 }
                 OperandSpec::Disp_mask => {
                     let base = v.get_register(inst.regs[1]);
-                    base.map(|addr| addr.wrapping_add(inst.disp as i32 as i64 as u64))
+                    base.map(|addr| addr.wrapping_add(inst.disp as u16))
                 }
                 OperandSpec::MemIndexScale => {
                     let index = v.get_register(inst.regs[2]);
                     index.map(|addr| {
                         addr
-                            .wrapping_mul(inst.scale as u64)
+                            .wrapping_mul(inst.scale as u16)
                     })
                 }
                 OperandSpec::MemIndexScale_mask => {
                     let index = v.get_register(inst.regs[2]);
                     index.map(|addr| {
                         addr
-                            .wrapping_mul(inst.scale as u64)
+                            .wrapping_mul(inst.scale as u16)
                     })
                 }
                 OperandSpec::MemIndexScaleDisp => {
                     let index = v.get_register(inst.regs[2]);
                     index.map(|addr| {
                         addr
-                            .wrapping_mul(inst.scale as u64)
-                            .wrapping_add(inst.disp as i32 as i64 as u64)
+                            .wrapping_mul(inst.scale as u16)
+                            .wrapping_add(inst.disp as u16)
                     })
                 }
                 OperandSpec::MemIndexScaleDisp_mask => {
                     let index = v.get_register(inst.regs[2]);
                     index.map(|addr| {
                         addr
-                            .wrapping_mul(inst.scale as u64)
-                            .wrapping_add(inst.disp as i32 as i64 as u64)
+                            .wrapping_mul(inst.scale as u16)
+                            .wrapping_add(inst.disp as u16)
                     })
                 }
                 OperandSpec::MemBaseIndexScale => {
@@ -661,7 +693,7 @@ impl<'inst> InstBehavior<'inst> {
                     base.and_then(|base| {
                         index.map(|index| {
                             base
-                                .wrapping_add(index.wrapping_mul(inst.scale as u64))
+                                .wrapping_add(index.wrapping_mul(inst.scale as u16))
                         })
                     })
                 }
@@ -671,7 +703,7 @@ impl<'inst> InstBehavior<'inst> {
                     base.and_then(|base| {
                         index.map(|index| {
                             base
-                                .wrapping_add(index.wrapping_mul(inst.scale as u64))
+                                .wrapping_add(index.wrapping_mul(inst.scale as u16))
                         })
                     })
                 }
@@ -681,8 +713,8 @@ impl<'inst> InstBehavior<'inst> {
                     base.and_then(|base| {
                         index.map(|index| {
                             base
-                                .wrapping_add(index.wrapping_mul(inst.scale as u64))
-                                .wrapping_add(inst.disp as i32 as i64 as u64)
+                                .wrapping_add(index.wrapping_mul(inst.scale as u16))
+                                .wrapping_add(inst.disp as u16)
                         })
                     })
                 }
@@ -692,16 +724,16 @@ impl<'inst> InstBehavior<'inst> {
                     base.and_then(|base| {
                         index.map(|index| {
                             base
-                                .wrapping_add(index.wrapping_mul(inst.scale as u64))
-                                .wrapping_add(inst.disp as i32 as i64 as u64)
+                                .wrapping_add(index.wrapping_mul(inst.scale as u16))
+                                .wrapping_add(inst.disp as u16)
                         })
                     })
                 }
-                OperandSpec::DispU64 => {
-                    Some(inst.disp)
-                }
                 OperandSpec::DispU32 => {
-                    Some(inst.disp as u32 as u64)
+                    Some(inst.disp as u16)
+                }
+                OperandSpec::DispU16 => {
+                    Some(inst.disp as u16 as u16)
                 }
                 other => {
                     // this could be `_debug_internal_assertions`-gated, but i'm not quite that
@@ -719,15 +751,16 @@ impl<'inst> InstBehavior<'inst> {
                     } else {
                         v.register_read(op.reg);
                     }
-                } else if op.spec == OperandSpec::Deref_rdi {
-                    // Deref_rdi is used for string instructions; operand-size overrides apply here
+                } else if op.spec == OperandSpec::Deref_edi {
+                    // Deref_edi is used for string instructions; operand-size overrides apply here
                     // and so the register that is incremented (or decremented!) depends on the
-                    // operand-size prefix. the register is correct for the operands, so we'll
+                    // operand-size prefix. the register is correct for the operands, so we'll just
+                    // steal it.
                     let reg = match self.inst.operands[op.disp as usize] {
-                        OperandSpec::Deref_rdi => RegSpec::rdi(),
-                        OperandSpec::Deref_rsi => RegSpec::rsi(),
                         OperandSpec::Deref_edi => RegSpec::edi(),
                         OperandSpec::Deref_esi => RegSpec::esi(),
+                        OperandSpec::Deref_di => RegSpec::di(),
+                        OperandSpec::Deref_si => RegSpec::si(),
                         OperandSpec::Deref => self.inst.regs[1],
                         other => {
                             // this could be `_debug_internal_assertions`-gated, but i'm not quite
@@ -747,7 +780,7 @@ impl<'inst> InstBehavior<'inst> {
                         },
                         OperandSpec::Disp => {
                             if let Some(base) = v.get_register(op.reg) {
-                                Some(base.wrapping_add(op.disp as i64 as u64))
+                                Some(base.wrapping_add(op.disp as u16))
                             } else {
                                 None
                             }
@@ -759,7 +792,7 @@ impl<'inst> InstBehavior<'inst> {
                             let base = v.get_register(op.reg);
                             let index = v.get_register(RegSpec::al());
                             if let (Some(base), Some(index)) = (base, index) {
-                                Some(base.wrapping_add(index as u64))
+                                Some(base.wrapping_add(index))
                             } else {
                                 None
                             }
@@ -785,10 +818,10 @@ impl<'inst> InstBehavior<'inst> {
 
         if let Some(acc) = self.flags_access() {
             if acc.is_read() {
-                v.register_read(RegSpec::rflags());
+                v.register_read(RegSpec::eflags());
             }
             if acc.is_write() {
-                v.register_write(RegSpec::rflags());
+                v.register_write(RegSpec::eflags());
             }
         }
 
@@ -838,12 +871,12 @@ impl<'inst> InstBehavior<'inst> {
                             v.register_read(RegSpec::mask(self.inst.prefixes.evex_unchecked().mask_reg()));
                         }
                     }
+                    OperandSpec::AbsoluteFarAddress |
                     OperandSpec::ImmI8 |
                     OperandSpec::ImmU8 |
                     OperandSpec::ImmI16 |
                     OperandSpec::ImmU16 |
                     OperandSpec::ImmI32 |
-                    OperandSpec::ImmI64 |
                     OperandSpec::ImmInDispField => {
                         // no register/memory access to report.
                     }
@@ -865,32 +898,22 @@ impl<'inst> InstBehavior<'inst> {
             }
 
             if access.is_write() {
-                // given a register `reg` that an instruction writes, expand it for the purposes of
-                // tracking register writes. x86 zero-extends writes to 32-bit GPRs into 64-bit GPR
-                // writes, so replicate that here.
-                fn apply_x86_zext(mut reg: RegSpec) -> RegSpec {
-                    use super::RegisterBank;
-                    if reg.bank == RegisterBank::D {
-                        reg.bank = RegisterBank::Q;
-                    }
-                    reg
-                }
                 match op_spec {
                     OperandSpec::RegRRR => {
-                        v.register_write(apply_x86_zext(self.inst.regs[0]));
+                        v.register_write(self.inst.regs[0]);
                     }
                     OperandSpec::RegMMM => {
-                        v.register_write(apply_x86_zext(self.inst.regs[1]));
+                        v.register_write(self.inst.regs[1]);
                     }
                     OperandSpec::RegVex => {
-                        v.register_write(apply_x86_zext(self.inst.regs[3]));
+                        v.register_write(self.inst.regs[3]);
                     }
                     OperandSpec::Reg4 => {
                         let spec = RegSpec {
                             num: self.inst.imm as u8,
                             bank: self.inst.regs[3].bank,
                         };
-                        v.register_write(apply_x86_zext(spec));
+                        v.register_write(spec);
                     }
                     OperandSpec::RegRRR_maskmerge |
                     OperandSpec::RegRRR_maskmerge_sae |
@@ -918,7 +941,6 @@ impl<'inst> InstBehavior<'inst> {
                     OperandSpec::ImmI16 |
                     OperandSpec::ImmU16 |
                     OperandSpec::ImmI32 |
-                    OperandSpec::ImmI64 |
                     OperandSpec::ImmInDispField => {
                         // no register/memory access to report.
                     }
@@ -1086,7 +1108,7 @@ impl BehaviorDigest {
 ///
 /// these instructions are considered "complex" for two reasons. first, while these are single
 /// instructions, they do not execute atomically. then even if they were executed in a single
-/// architectural state update, the size of the memory access is a function of `rcx`.
+/// architectural state update, the size of the memory access is a function of `ecx`.
 ///
 /// worse, different processors can execute these instructions somewhat differently. from the Intel
 /// SDM:
@@ -1148,10 +1170,10 @@ impl BehaviorDigest {
 /// for instructions that *have* an operand, their operand's semantics differs substantially from a
 /// "normal" understanding of the literal operand.
 ///
-/// for `vmread` and `vmwrite`, the memory operand may be `[rax]`, but it is implicitly an access
+/// for `vmread` and `vmwrite`, the memory operand may be `[eax]`, but it is implicitly an access
 /// to the current VMCS - and, indeed, not even an access to "memory".
 ///
-/// for `vmrun`, `vmsave`, and `vmload`, the operand is "`rax`", but expects `rax` to carry a
+/// for `vmrun`, `vmsave`, and `vmload`, the operand is "`eax`", but expects `eax` to carry a
 /// physical address to a VMCB which is then loaded from or stored into.
 ///
 /// generally, SVM/VMX instructions operate on a hidden VMCB/VMCS structure and are "complex" for
@@ -1200,12 +1222,12 @@ impl BehaviorDigest {
 /// address *plus* the second operand divided by the access size. as a worked example with a dword
 /// access:
 /// ```text
-/// rax := 0x1_0000_0100
-/// rcx := 0x203
+/// eax := 0x1000_0100
+/// ecx := 0x203
 ///
-/// // bts dword [rax], ecx
-/// ptr = rax + (rcx / 32)  ; 0x1_0000_0303
-/// bit = rcx % 32          ; 3
+/// // bts dword [eax], ecx
+/// ptr = eax + (ecx / 32)  ; 0x1000_0303
+/// bit = ecx % 32          ; 3
 /// cf := (*ptr >> bit) & 1
 /// *ptr |= (1 << bit)
 ///
@@ -1659,7 +1681,7 @@ pub trait AccessVisitor {
     /// `get_register()` may be implemented withhout calling `register_read()`, in which case when
     /// used with `visit_accesses` the register/memory read/writes will all correspond directly to
     /// implicit and explicit operands.
-    fn get_register(&mut self, reg: RegSpec) -> Option<u64> {
+    fn get_register(&mut self, reg: RegSpec) -> Option<u16> {
         self.register_read(reg);
         None
     }
@@ -1667,45 +1689,51 @@ pub trait AccessVisitor {
     ///
     /// when used with `visit_accesses`, an address is only provided when yaxpeax-x86 can calculate
     /// an effective address (i.e. `get_register()` calls for all dependent registers return a
-    /// value). all non-`ComplexOp` instructions have a known memory access size, so this is always
+    /// value). for real mode, this effective address is the computed offset into some
+    /// corresponding segment; the segment of choice and its base are left to the library user to
+    /// track. all non-`ComplexOp` instructions have a known memory access size, so this is always
     /// reported regardless of if *where* is not known.
     ///
     /// some instructions can both read and write memory (consider `call [addr]`).
-    fn memory_read(&mut self, address: Option<u64>, size: u32);
+    fn memory_read(&mut self, address: Option<u16>, size: u32);
     /// record that the instruction writes a memory location.
     ///
     /// when used with `visit_accesses`, an address is only provided when yaxpeax-x86 can calculate
     /// an effective address (i.e. `get_register()` calls for all dependent registers return a
-    /// value). all non-`ComplexOp` instructions have a known memory access size, so this is always
+    /// value). for real mode, this effective address is the computed offset into some
+    /// corresponding segment; the segment of choice and its base are left to the library user to
+    /// track. all non-`ComplexOp` instructions have a known memory access size, so this is always
     /// reported regardless of if *where* is not known.
     ///
     /// some instructions can both read and write memory (consider `call [addr]`).
-    fn memory_write(&mut self, address: Option<u64>, size: u32);
+    fn memory_write(&mut self, address: Option<u16>, size: u32);
 }
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(all(test, feature = "unstable"))]
 mod test {
     use super::*;
-    use crate::long_mode::InstDecoder;
+    use crate::real_mode::InstDecoder;
 
     use alloc::vec;
     use alloc::vec::Vec;
 
     #[test]
     fn access_visitor_works() {
-        // xor eax, dword [rcx]
+        // xor ax, word [bx + di * 1]
         let bytes = &[0x33, 0x01];
         let inst = InstDecoder::default().decode_slice(bytes).expect("can decode trivial instructions");
 
         struct AccessCtx {
-            rcx: u64,
+            bx: u16,
+            di: u16,
 
             accesses: Vec<(RegSpec, Access)>,
-            mem_accesses: Vec<((Option<u64>, u32), Access)>,
+            mem_accesses: Vec<((Option<u16>, u32), Access)>,
         }
 
         let mut ctx = AccessCtx {
-            rcx: 0x10000,
+            bx: 0x100,
+            di: 0x240,
             accesses: Vec::new(),
             mem_accesses: Vec::new(),
         };
@@ -1719,40 +1747,45 @@ mod test {
                 self.accesses.push((reg, Access::Write));
             }
 
-            fn get_register(&mut self, reg: RegSpec) -> Option<u64> {
+            fn get_register(&mut self, reg: RegSpec) -> Option<u16> {
                 self.register_read(reg);
 
-                if reg == RegSpec::rcx() {
-                    Some(self.rcx)
+                if reg == RegSpec::bx() {
+                    Some(self.bx)
+                } else if reg == RegSpec::di() {
+                    Some(self.di)
                 } else {
                     None
                 }
             }
 
-            fn memory_read(&mut self, address: Option<u64>, size: u32) {
+            fn memory_read(&mut self, address: Option<u16>, size: u32) {
                 self.mem_accesses.push(((address, size), Access::Read));
             }
 
-            fn memory_write(&mut self, address: Option<u64>, size: u32) {
+            fn memory_write(&mut self, address: Option<u16>, size: u32) {
                 self.mem_accesses.push(((address, size), Access::Write));
             }
         }
 
         let behavior = inst.behavior();
-        behavior.visit_accesses(&mut ctx).expect("xor eax, [rcx] is not complex");
+        behavior.visit_accesses(&mut ctx).expect("xor ax, [bx + di * 1] is not complex");
 
         assert_eq!(ctx.accesses, vec![
-               (RegSpec::rflags(), Access::Write),
-               (RegSpec::eax(), Access::Read),
-               (RegSpec::rax(), Access::Write),
-               (RegSpec::rcx(), Access::Read)
+               (RegSpec::eflags(), Access::Write),
+               (RegSpec::ax(), Access::Read),
+               (RegSpec::ax(), Access::Write),
+               (RegSpec::bx(), Access::Read),
+               (RegSpec::di(), Access::Read)
         ]);
-        assert_eq!(ctx.mem_accesses, vec![((Some(0x10000), 4), Access::Read)]);
+        // the reported access is the offset into the corresponding segment. unfortunately, "which
+        // segment" is for the caller to track.
+        assert_eq!(ctx.mem_accesses, vec![((Some(0x340), 2), Access::Read)]);
     }
 
     #[test]
     fn operand_iter_basically_works() {
-        // xor eax, eax
+        // xor ax, ax
         let bytes = &[0x33, 0xc0];
         let inst = InstDecoder::default().decode_slice(bytes).expect("can decode trivial instructions");
 
@@ -1760,18 +1793,18 @@ mod test {
         let behavior = inst.behavior();
 
         // owo hewwo there
-        let operands = behavior.all_operands().expect("xor eax, eax is not complex");
+        let operands = behavior.all_operands().expect("xor ax, ax is not complex");
 
         // OwO waowwww
         let collected: alloc::vec::Vec<(Operand, Access)> = operands.iter().collect();
         let expected = alloc::vec![
-            (Operand::Register { reg: RegSpec::rflags() }, Access::Write),
-            (Operand::Register { reg: RegSpec::eax() }, Access::ReadWrite),
-            (Operand::Register { reg: RegSpec::eax() }, Access::Read),
+            (Operand::Register { reg: RegSpec::eflags() }, Access::Write),
+            (Operand::Register { reg: RegSpec::ax() }, Access::ReadWrite),
+            (Operand::Register { reg: RegSpec::ax() }, Access::Read),
         ];
         assert_eq!(collected, expected);
 
-        #[cfg(feature = "unstable")]
+        #[cfg(feature="unstable")]
         {
             assert_eq!(behavior.privilege_level(), Some(PrivilegeLevel::Any));
             let exceptions = behavior.exceptions();
@@ -1779,7 +1812,7 @@ mod test {
         }
 
         // but if an operand does a memory access, that can fault:
-        // xor eax, [rax]
+        // xor eax, [bx + si * 1]
         let bytes = &[0x33, 0x00];
         let inst = InstDecoder::default().decode_slice(bytes).expect("can decode trivial instructions");
         let behavior = inst.behavior();
@@ -1787,13 +1820,13 @@ mod test {
 
         let collected: alloc::vec::Vec<(Operand, Access)> = operands.iter().collect();
         let expected = alloc::vec![
-            (Operand::Register { reg: RegSpec::rflags() }, Access::Write),
-            (Operand::Register { reg: RegSpec::eax() }, Access::ReadWrite),
-            (Operand::MemDeref { base: RegSpec::rax() }, Access::Read),
+            (Operand::Register { reg: RegSpec::eflags() }, Access::Write),
+            (Operand::Register { reg: RegSpec::ax() }, Access::ReadWrite),
+            (Operand::MemBaseIndexScale { base: RegSpec::bx(), index: RegSpec::si(), scale: 1 }, Access::Read),
         ];
         assert_eq!(collected, expected);
 
-        #[cfg(feature = "unstable")]
+        #[cfg(feature="unstable")]
         {
             assert_eq!(behavior.privilege_level(), Some(PrivilegeLevel::Any));
             let exceptions = behavior.exceptions();
@@ -1925,20 +1958,20 @@ const SETCC: BehaviorDigest = BehaviorDigest::empty()
 static PUSH_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Disp,
-        reg: RegSpec::rsp(),
-        disp: -8i32,
+        reg: RegSpec::sp(),
+        disp: -2i32,
         write: true,
     },
     // push.. pushes the value (above), then does a RMW on rsp.
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -1947,19 +1980,19 @@ static PUSH_OPS: &'static [ImplicitOperand] = &[
 static POP_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -1968,13 +2001,13 @@ static POP_OPS: &'static [ImplicitOperand] = &[
 static JCC_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rflags(),
+        reg: RegSpec::eflags(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     }
@@ -2019,12 +2052,14 @@ static CDQE_OPS: &'static [ImplicitOperand] = &[
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0,
         write: true,
     }
 ];
 
+// TODO: these need ... something.
+//
 // note CQD, CDQ, CQO:
 //
 // these are writes to dx/edx/rdx but *not* `*ax`. this is because while these registers "write"
@@ -2069,13 +2104,13 @@ static CDQ_OPS: &'static [ImplicitOperand] = &[
 static CQO_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
+        reg: RegSpec::edx(),
         disp: 0,
         write: true,
     }
@@ -2084,26 +2119,26 @@ static CQO_OPS: &'static [ImplicitOperand] = &[
 static PUSHF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rflags(),
+        reg: RegSpec::eflags(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::Disp,
-        reg: RegSpec::rsp(),
-        disp: -8i32,
+        reg: RegSpec::sp(),
+        disp: -2i32,
         write: true,
     },
     // push.. pushes the value (above), then does a RMW on rsp.
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2112,25 +2147,25 @@ static PUSHF_OPS: &'static [ImplicitOperand] = &[
 static POPF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rflags(),
+        reg: RegSpec::eflags(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2145,7 +2180,7 @@ static SAHF_OPS: &'static [ImplicitOperand] = &[
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rflags(),
+        reg: RegSpec::eflags(),
         disp: 0,
         write: true,
     }
@@ -2154,7 +2189,7 @@ static SAHF_OPS: &'static [ImplicitOperand] = &[
 static LAHF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rflags(),
+        reg: RegSpec::eflags(),
         disp: 0,
         write: false,
     },
@@ -2168,26 +2203,26 @@ static LAHF_OPS: &'static [ImplicitOperand] = &[
 
 static MOVS_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 1,
         write: false,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 1,
         write: true,
     },
@@ -2195,14 +2230,14 @@ static MOVS_OPS: &'static [ImplicitOperand] = &[
 
 static LODS_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 1,
         write: false,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 1,
         write: true,
     },
@@ -2210,14 +2245,14 @@ static LODS_OPS: &'static [ImplicitOperand] = &[
 
 static STOS_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 0,
         write: true,
     },
@@ -2225,20 +2260,20 @@ static STOS_OPS: &'static [ImplicitOperand] = &[
 
 static SCAS_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref_rdi,
-        reg: RegSpec::eax(),
+        spec: OperandSpec::Deref_edi,
+        reg: RegSpec::ax(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rflags(),
+        reg: RegSpec::eflags(),
         disp: 0,
         write: true,
     }
@@ -2247,25 +2282,25 @@ static SCAS_OPS: &'static [ImplicitOperand] = &[
 static RETURN_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2274,37 +2309,37 @@ static RETURN_OPS: &'static [ImplicitOperand] = &[
 static LEAVE_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rbp(),
+        reg: RegSpec::bp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rbp(),
+        reg: RegSpec::bp(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2313,31 +2348,31 @@ static LEAVE_OPS: &'static [ImplicitOperand] = &[
 static ENTER_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rbp(),
+        reg: RegSpec::bp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rbp(),
+        reg: RegSpec::bp(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::Disp,
-        reg: RegSpec::rsp(),
-        disp: -8i32,
+        reg: RegSpec::sp(),
+        disp: -2i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2346,9 +2381,9 @@ static ENTER_OPS: &'static [ImplicitOperand] = &[
 static XLAT_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         // xlat is the only implicit operand to use a base/index addressing scheme, so note the
-        // base (rbx) and handle the implicit al index in code..?
+        // base (bx) and handle the implicit al index in code..?
         spec: OperandSpec::MemIndexScale,
-        reg: RegSpec::rbx(),
+        reg: RegSpec::bx(),
         disp: 0i32,
         write: false,
     },
@@ -2430,26 +2465,6 @@ static MUL_OPS_1OP_DWORD: &'static [ImplicitOperand] = &[
         write: true,
     }
 ];
-static MUL_OPS_1OP_QWORD: &'static [ImplicitOperand] = &[
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
-        disp: 0i32,
-        write: false,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
-        disp: 0i32,
-        write: true,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
-        disp: 0i32,
-        write: true,
-    }
-];
 
 // the actual implicit operands of `{i,}div` are broken out by operation size..
 static DIV_OPS_1OP_BYTE: &'static [ImplicitOperand] = &[
@@ -2514,32 +2529,6 @@ static DIV_OPS_1OP_DWORD: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
         reg: RegSpec::edx(),
-        disp: 0i32,
-        write: true,
-    }
-];
-static DIV_OPS_1OP_QWORD: &'static [ImplicitOperand] = &[
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
-        disp: 0i32,
-        write: false,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
-        disp: 0i32,
-        write: false,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
-        disp: 0i32,
-        write: true,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
         disp: 0i32,
         write: true,
     }
@@ -2644,32 +2633,32 @@ static CPUID_OPS: &'static [ImplicitOperand] = &[
 static CALL_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::Disp,
-        reg: RegSpec::rsp(),
-        disp: -8i32,
+        reg: RegSpec::sp(),
+        disp: -2i32,
         write: true,
     },
     // push.. pushes the value (above), then does a RMW on rsp.
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2678,7 +2667,7 @@ static CALL_OPS: &'static [ImplicitOperand] = &[
 static JMP_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     },
@@ -2687,7 +2676,7 @@ static JMP_OPS: &'static [ImplicitOperand] = &[
 static JMPF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     },
@@ -2702,7 +2691,7 @@ static JMPF_OPS: &'static [ImplicitOperand] = &[
 static CALLF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: false,
     },
@@ -2714,26 +2703,26 @@ static CALLF_OPS: &'static [ImplicitOperand] = &[
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::Disp,
-        reg: RegSpec::rsp(),
-        disp: -10i32,
+        reg: RegSpec::sp(),
+        disp: -4i32,
         write: true,
     },
     // push.. pushes the value (above), then does a RMW on rsp.
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2742,13 +2731,13 @@ static CALLF_OPS: &'static [ImplicitOperand] = &[
 static RETF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rip(),
+        reg: RegSpec::eip(),
         disp: 0,
         write: true,
     },
@@ -2761,13 +2750,13 @@ static RETF_OPS: &'static [ImplicitOperand] = &[
     // pop.. pops the value (above), then does a RMW on rsp.
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rsp(),
+        reg: RegSpec::sp(),
         disp: 0,
         write: true,
     }
@@ -2848,13 +2837,13 @@ static CMPXCHG_OPS_DWORD: &'static [ImplicitOperand] = &[
 static CMPXCHG_OPS_QWORD: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0,
         write: true,
     },
@@ -2902,52 +2891,47 @@ static CMPXCHG8B_OPS: &'static [ImplicitOperand] = &[
 static CMPXCHG16B_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
+        reg: RegSpec::edx(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rcx(),
+        reg: RegSpec::ecx(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rbx(),
+        reg: RegSpec::ebx(),
         disp: 0,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0,
         write: true,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
+        reg: RegSpec::edx(),
         disp: 0,
         write: true,
     },
 ];
 
+// TODO: register size should be picked by memory access size, but defaulting to rdi for now.
 static MASKMOVQ_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rdi(),
-        disp: 0i32,
-        write: false,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::Deref,
-        reg: RegSpec::rdi(),
+        reg: RegSpec::di(),
         disp: 0i32,
         write: true,
     },
@@ -2956,19 +2940,19 @@ static MASKMOVQ_OPS: &'static [ImplicitOperand] = &[
 static MONITOR_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rax(),
+        reg: RegSpec::ax(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rcx(),
+        reg: RegSpec::ecx(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
-        spec: OperandSpec::Deref,
-        reg: RegSpec::rdx(),
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::edx(),
         disp: 0i32,
         write: false,
     },
@@ -2986,7 +2970,7 @@ static XMM0_READ_OPS: &'static [ImplicitOperand] = &[
 static MULX_64B_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
+        reg: RegSpec::edx(),
         disp: 0i32,
         write: false,
     },
@@ -3008,39 +2992,27 @@ static EDI_MEMWRITE_OPS: &'static [ImplicitOperand] = &[
         disp: 0i32,
         write: false,
     },
-    ImplicitOperand {
-        spec: OperandSpec::Deref,
-        reg: RegSpec::edi(),
-        disp: 0i32,
-        write: true,
-    },
 ];
 
-static RDI_MEMWRITE_OPS: &'static [ImplicitOperand] = &[
+static DI_MEMWRITE_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Deref,
-        reg: RegSpec::rdi(),
+        reg: RegSpec::di(),
         disp: 0i32,
         write: false,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::Deref,
-        reg: RegSpec::rdi(),
-        disp: 0i32,
-        write: true,
     },
 ];
 
 static PCMPESTRI_64B_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
+        reg: RegSpec::edx(),
         disp: 0i32,
         write: false,
     },
@@ -3076,13 +3048,13 @@ static PCMPESTRI_32B_OPS: &'static [ImplicitOperand] = &[
 static PCMPESTRM_64B_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rax(),
+        reg: RegSpec::eax(),
         disp: 0i32,
         write: false,
     },
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
-        reg: RegSpec::rdx(),
+        reg: RegSpec::edx(),
         disp: 0i32,
         write: false,
     },
@@ -3349,21 +3321,6 @@ static LOADIWKEY_OPS: &'static [ImplicitOperand] = &[
     },
 ];
 
-static RW_RCX_OPS: &'static [ImplicitOperand] = &[
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rcx(),
-        disp: 0,
-        write: false,
-    },
-    ImplicitOperand {
-        spec: OperandSpec::RegRRR,
-        reg: RegSpec::rcx(),
-        disp: 0,
-        write: true,
-    },
-];
-
 static RW_ECX_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::RegRRR,
@@ -3394,6 +3351,286 @@ static RW_CX_OPS: &'static [ImplicitOperand] = &[
     },
 ];
 
+static RW_AX_OPS: &'static [ImplicitOperand] = &[
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ax(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ax(),
+        disp: 0,
+        write: true,
+    },
+];
+
+static RW_AL_OPS: &'static [ImplicitOperand] = &[
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::al(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::al(),
+        disp: 0,
+        write: true,
+    },
+];
+
+static PUSHAD_OPS: &'static [ImplicitOperand] = &[
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::eax(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ecx(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::edx(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ebx(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ebp(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esi(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::edi(),
+        disp: 0,
+        write: false,
+    },
+    // actually .. push values
+    ImplicitOperand {
+        spec: OperandSpec::Disp,
+        reg: RegSpec::esp(),
+        disp: -4i32 * 8,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: true,
+    }
+];
+
+static POPAD_OPS: &'static [ImplicitOperand] = &[
+    // read "the stack"
+    ImplicitOperand {
+        spec: OperandSpec::Disp,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: false,
+    },
+    // and write registers
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::eax(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ecx(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::edx(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ebx(),
+        disp: 0,
+        write: true,
+    },
+    // no pop to sp
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ebp(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esi(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::edi(),
+        disp: 0,
+        write: true,
+    },
+    // and finally write back modified sp
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: true,
+    }
+];
+
+static PUSHA_OPS: &'static [ImplicitOperand] = &[
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::sp(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ax(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::cx(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::dx(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::bx(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::bp(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::si(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::di(),
+        disp: 0,
+        write: false,
+    },
+    // actually .. push values
+    ImplicitOperand {
+        spec: OperandSpec::Disp,
+        reg: RegSpec::sp(),
+        disp: -2i32 * 8,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::sp(),
+        disp: 0,
+        write: true,
+    }
+];
+
+static POPA_OPS: &'static [ImplicitOperand] = &[
+    // read "the stack"
+    ImplicitOperand {
+        spec: OperandSpec::Disp,
+        reg: RegSpec::sp(),
+        disp: 0,
+        write: false,
+    },
+    // and write registers
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::ax(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::cx(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::dx(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::bx(),
+        disp: 0,
+        write: true,
+    },
+    // no pop to sp
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::bp(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::si(),
+        disp: 0,
+        write: true,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::di(),
+        disp: 0,
+        write: true,
+    },
+    // and finally write back modified sp
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::sp(),
+        disp: 0,
+        write: true,
+    }
+];
+
 const PUSH_OPS_IDX: u16 = 1;
 const POP_OPS_IDX: u16 = 2;
 const JCC_OPS_IDX: u16 = 3;
@@ -3418,56 +3655,59 @@ const CLTS_IDX: u16 = 21;
 const MUL_IDX_1OP_BYTE: u16 = 22;
 const MUL_IDX_1OP_WORD: u16 = 23;
 const MUL_IDX_1OP_DWORD: u16 = 24;
-const MUL_IDX_1OP_QWORD: u16 = 25;
-const DIV_IDX_1OP_BYTE: u16 = 26;
-const DIV_IDX_1OP_WORD: u16 = 27;
-const DIV_IDX_1OP_DWORD: u16 = 28;
-const DIV_IDX_1OP_QWORD: u16 = 29;
-const RDTSC_IDX: u16 = 30;
-const RDPMC_IDX: u16 = 31;
-const CPUID_IDX: u16 = 32;
-const CALL_OPS_IDX: u16 = 33;
-const JMP_OPS_IDX: u16 = 34;
-const CALLF_OPS_IDX: u16 = 35;
-const JMPF_OPS_IDX: u16 = 36;
-const LFS_IDX: u16 = 37;
-const LGS_IDX: u16 = 38;
-const LSS_IDX: u16 = 39;
-const CMPXCHG_IDX_BYTE: u16 = 40;
-const CMPXCHG_IDX_WORD: u16 = 41;
-const CMPXCHG_IDX_DWORD: u16 = 42;
-const CMPXCHG_IDX_QWORD: u16 = 43;
-const CMPXCHG8B_IDX: u16 = 44;
-const CMPXCHG16B_IDX: u16 = 45;
-const RDTSCP_IDX: u16 = 46;
-const MASKMOVQ_IDX: u16 = 47;
-const MONITOR_IDX: u16 = 48;
-const XMM0_READ_IDX: u16 = 49;
-const MULX_64B_IDX: u16 = 50;
-const MULX_32B_IDX: u16 = 51;
-const EDI_MEMWRITE_IDX: u16 = 52;
-const RDI_MEMWRITE_IDX: u16 = 53;
-const PCMPESTRI_64B_IDX: u16 = 54;
-const PCMPESTRI_32B_IDX: u16 = 55;
-const PCMPESTRM_64B_IDX: u16 = 56;
-const PCMPESTRM_32B_IDX: u16 = 57;
-const PCMPISTRI_IDX: u16 = 58;
-const PCMPISTRM_IDX: u16 = 59;
-const READ_EDX_EAX_IDX: u16 = 60;
-const RETF_IDX: u16 = 61;
-const LMSW_IDX: u16 = 62;
-const SMSW_IDX: u16 = 63;
-const READ_EAX_IDX: u16 = 64;
-const WRITE_AL_IDX: u16 = 65;
-const RW_XMM0TO7_IDX: u16 = 66;
-const ENCODEKEY_IDX: u16 = 67;
-const LOADIWKEY_IDX: u16 = 68;
-const RW_RCX_IDX: u16 = 69;
-const RW_ECX_IDX: u16 = 70;
-const RW_CX_IDX: u16 = 71;
-const ENTER_IDX: u16 = 72;
+const DIV_IDX_1OP_BYTE: u16 = 25;
+const DIV_IDX_1OP_WORD: u16 = 26;
+const DIV_IDX_1OP_DWORD: u16 = 27;
+const RDTSC_IDX: u16 = 28;
+const RDPMC_IDX: u16 = 29;
+const CPUID_IDX: u16 = 30;
+const CALL_OPS_IDX: u16 = 31;
+const JMP_OPS_IDX: u16 = 32;
+const CALLF_OPS_IDX: u16 = 33;
+const JMPF_OPS_IDX: u16 = 34;
+const LFS_IDX: u16 = 35;
+const LGS_IDX: u16 = 36;
+const LSS_IDX: u16 = 37;
+const CMPXCHG_IDX_BYTE: u16 = 38;
+const CMPXCHG_IDX_WORD: u16 = 39;
+const CMPXCHG_IDX_DWORD: u16 = 40;
+const CMPXCHG_IDX_QWORD: u16 = 41;
+const CMPXCHG8B_IDX: u16 = 42;
+const CMPXCHG16B_IDX: u16 = 43;
+const RDTSCP_IDX: u16 = 44;
+const MASKMOVQ_IDX: u16 = 45;
+const MONITOR_IDX: u16 = 46;
+const XMM0_READ_IDX: u16 = 47;
+const MULX_64B_IDX: u16 = 48;
+const MULX_32B_IDX: u16 = 49;
+const EDI_MEMWRITE_IDX: u16 = 50;
+const DI_MEMWRITE_IDX: u16 = 51;
+const PCMPESTRI_64B_IDX: u16 = 52;
+const PCMPESTRI_32B_IDX: u16 = 53;
+const PCMPESTRM_64B_IDX: u16 = 54;
+const PCMPESTRM_32B_IDX: u16 = 55;
+const PCMPISTRI_IDX: u16 = 56;
+const PCMPISTRM_IDX: u16 = 57;
+const READ_EDX_EAX_IDX: u16 = 58;
+const RETF_IDX: u16 = 59;
+const LMSW_IDX: u16 = 60;
+const SMSW_IDX: u16 = 61;
+const READ_EAX_IDX: u16 = 62;
+const WRITE_AL_IDX: u16 = 63;
+const RW_XMM0TO7_IDX: u16 = 64;
+const ENCODEKEY_IDX: u16 = 65;
+const LOADIWKEY_IDX: u16 = 66;
+const RW_ECX_IDX: u16 = 67;
+const RW_CX_IDX: u16 = 68;
+const ENTER_IDX: u16 = 69;
+const RW_AX_IDX: u16 = 70;
+const RW_AL_IDX: u16 = 71;
+const PUSHA_IDX: u16 = 72;
+const POPA_IDX: u16 = 73;
+const PUSHAD_IDX: u16 = 74;
+const POPAD_IDX: u16 = 75;
 
-static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 73] = [
+static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 76] = [
     &[], // implicit ops list 0 is not used
     PUSH_OPS,
     POP_OPS,
@@ -3493,11 +3733,9 @@ static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 73] = [
     MUL_OPS_1OP_BYTE,
     MUL_OPS_1OP_WORD,
     MUL_OPS_1OP_DWORD,
-    MUL_OPS_1OP_QWORD,
     DIV_OPS_1OP_BYTE,
     DIV_OPS_1OP_WORD,
     DIV_OPS_1OP_DWORD,
-    DIV_OPS_1OP_QWORD,
     RDTSC_OPS,
     RDPMC_OPS,
     CPUID_OPS,
@@ -3521,7 +3759,7 @@ static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 73] = [
     MULX_64B_OPS,
     MULX_32B_OPS,
     EDI_MEMWRITE_OPS,
-    RDI_MEMWRITE_OPS,
+    DI_MEMWRITE_OPS,
     PCMPESTRI_64B_OPS,
     PCMPESTRI_32B_OPS,
     PCMPESTRM_64B_OPS,
@@ -3537,10 +3775,15 @@ static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 73] = [
     RW_XMM0TO7_OPS,
     ENCODEKEY_OPS,
     LOADIWKEY_OPS,
-    RW_RCX_OPS,
     RW_ECX_OPS,
     RW_CX_OPS,
     ENTER_OPS,
+    RW_AX_OPS,
+    RW_AL_OPS,
+    PUSHA_OPS,
+    POPA_OPS,
+    PUSHAD_OPS,
+    POPAD_OPS,
 ];
 
 fn opcode2behavior(opc: &Opcode) -> BehaviorDigest {
@@ -3555,11 +3798,17 @@ fn behavior_table_size_is_right() {
     assert_eq!(TABLE.len(), super::Opcode::COUNT);
 
     assert_eq!(opcode2behavior(&Opcode::VMOVLHPS), GENERAL_W_R_R);
-    assert_eq!(opcode2behavior(&Opcode::FDIVRP), GENERAL_RW_R);
+
+    assert_eq!(
+        opcode2behavior(&Opcode::LIDT),
+        BehaviorDigest::empty()
+            .set_pl0()
+            .set_operand(0, Access::Read)
+    );
 }
 
 /// this table MUST line up with Opcode declaration order in `mod.rs`.
-static TABLE: [BehaviorDigest; 1413] = [
+static TABLE: [BehaviorDigest; 1425] = [
     /* ADD => */ GENERAL_RW_R_FLAGWRITE,
     /* OR => */ GENERAL_RW_R_FLAGWRITE,
     /* ADC => */ GENERAL_RW_R_FLAGRW,
@@ -3860,6 +4109,14 @@ static TABLE: [BehaviorDigest; 1413] = [
             .set_operand(0, Access::Write)
             .set_operand(1, Access::Read)
             .set_flags_access(Access::Write),
+    /* LES => */ BehaviorDigest::empty()
+            .set_pl_special()
+            .set_operand(0, Access::Write)
+            .set_operand(1, Access::Read),
+    /* LDS => */ BehaviorDigest::empty()
+            .set_pl_special()
+            .set_operand(0, Access::Write)
+            .set_operand(1, Access::Read),
     /* SGDT => */ BehaviorDigest::empty()
             .set_pl_special()
             .set_operand(0, Access::Write),
@@ -5164,10 +5421,52 @@ static TABLE: [BehaviorDigest; 1413] = [
             .set_operand(0, Access::Read)
             .set_flags_access(Access::ReadWrite)
             .set_nontrivial(true),
-    /* JRCXZ => */ BehaviorDigest::empty()
+    /* JCXZ => */ BehaviorDigest::empty()
             .set_pl_any()
             .set_operand(0, Access::Read)
             .set_nontrivial(true),
+
+    /* PUSHA => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_nontrivial(true),
+    /* POPA => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_nontrivial(true),
+    /* BOUND => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_operand(0, Access::Read)
+            .set_operand(1, Access::Read),
+    /* ARPL => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_operand(0, Access::ReadWrite)
+            .set_operand(1, Access::Read)
+            .set_flags_access(Access::Write),
+    /* AAS => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_flags_access(Access::Write)
+            .set_implicit_ops(RW_AX_IDX),
+    /* AAA => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_flags_access(Access::Write)
+            .set_implicit_ops(RW_AX_IDX),
+    /* DAS => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_flags_access(Access::ReadWrite)
+            .set_implicit_ops(RW_AL_IDX),
+    /* DAA => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_flags_access(Access::ReadWrite)
+            .set_implicit_ops(RW_AL_IDX),
+    /* AAM => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_operand(0, Access::Read)
+            .set_flags_access(Access::Write)
+            .set_implicit_ops(RW_AX_IDX),
+    /* AAD => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_operand(0, Access::Read)
+            .set_flags_access(Access::Write)
+            .set_implicit_ops(RW_AX_IDX),
 
         // started shipping in Tremont, 2020 sept 23
         // while this instruction is marked "write, read", the written first operand is a register

@@ -1,5 +1,7 @@
 mod operand;
 mod opcode;
+#[cfg(feature="behavior")]
+mod behavior;
 
 use std::fmt::Write;
 

@@ -3,6 +3,8 @@ mod evex;
 #[cfg(feature = "fmt")]
 mod display;
 pub mod uarch;
+#[cfg(feature = "behavior")]
+pub mod behavior;
 
 pub use crate::MemoryAccessSize;
 use crate::{Address, Word};
@@ -1000,6 +1002,7 @@ const XSAVE: [Opcode; 10] = [
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "_debug_internal_asserts", derive(strum::EnumCount))]
 #[non_exhaustive]
 #[repr(u32)]
 pub enum Opcode {

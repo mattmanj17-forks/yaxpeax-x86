@@ -4,6 +4,8 @@ mod opcode;
 #[cfg(feature="fmt")]
 mod display;
 mod evex_generated;
+#[cfg(feature="behavior")]
+mod behavior;
 
 use std::fmt::Write;
 

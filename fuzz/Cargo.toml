@@ -64,3 +64,8 @@ name = "behavior_does_not_panic"
 path = "fuzz_targets/behavior_does_not_panic.rs"
 test = false
 doc = false
+
+[features]
+default = ["unstable"]
+
+unstable = ["yaxpeax-x86/unstable"]
