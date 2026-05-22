@@ -11,9 +11,8 @@
   (RegSpec::xmm, RegSpec::q, RegSpec::d, RegSpec::st, etc)
 * for uarch-specific decoding, there is now a feature bit for Intel Key Locker. this corrects an
   issue where Key Locker instructions would decode under AMD-specific decoders.
-* push-immediate, pushf, popf, enter, leave, and xlat now all report a correct memory
-  access size, fixing the prior behavior of reporting no memory access size at
-  all
+* push-immediate, pushf, popf, pusha, popa, enter, leave, and xlat now all report a correct memory
+  access size, fixing the prior behavior of reporting no memory access size at all
 * table load/store instructions (lgdt, lidt, lldt, sgdt, sidt, sldt) have correct (mode-dependent)
   memory access sizes, rather than incorrectly varying on operand-size overrides.
 * 64-bit mode: mov seg-to-reg uses 32-bit GPRs for the destination rather than 16-bit.

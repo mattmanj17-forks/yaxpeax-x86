@@ -3822,7 +3822,8 @@ enum OperandCase {
     G_E_xmm_Ib,
     AL_Ibs,
     AX_Ivd,
-    Ivs,
+    PushIbs,
+    PushIvs,
     ModRM_0x83,
     Ed_G_xmm,
     G_Ed_xmm,
@@ -3994,11 +3995,16 @@ enum OperandCase {
 #[repr(u16)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum OperandCode {
-    Ivs = OperandCodeBuilder::new().operand_case(OperandCase::Ivs).bits(),
     I_3 = OperandCodeBuilder::new().operand_case(OperandCase::I_3).bits(),
     Nothing = OperandCodeBuilder::new().operand_case(OperandCase::Nothing).bits(),
     Ib = OperandCodeBuilder::new().operand_case(OperandCase::Ib).bits(),
     Ibs = OperandCodeBuilder::new().only_imm().operand_case(OperandCase::Ibs).bits(),
+    // `push` of an immediate means we have to set a memory size, but `Ibs` is also the operand
+    // form for short relative (conditional) branches. to avoid the conditional in that relatively
+    // hot path, push is a different operand code so we can shove a `mem_size = 8` into the
+    // instruction later.
+    PushIbs = OperandCodeBuilder::new().operand_case(OperandCase::PushIbs).bits(),
+    PushIvs = OperandCodeBuilder::new().operand_case(OperandCase::PushIvs).bits(),
     Jvds = OperandCodeBuilder::new().only_imm().operand_case(OperandCase::Jvds).bits(),
     Yv_Xv = OperandCodeBuilder::new().operand_case(OperandCase::Yv_Xv).bits(),
 
@@ -4475,9 +4481,9 @@ const OPCODES: [OpcodeRecord; 256] = [
     OpcodeRecord::new(Interpretation::Prefix, OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Prefix, OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Prefix, OperandCode::Nothing),
-    OpcodeRecord::new(Interpretation::Instruction(Opcode::PUSH), OperandCode::Ivs),
+    OpcodeRecord::new(Interpretation::Instruction(Opcode::PUSH), OperandCode::PushIvs),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::IMUL), OperandCode::Gv_Ev_Iv),
-    OpcodeRecord::new(Interpretation::Instruction(Opcode::PUSH), OperandCode::Ibs),
+    OpcodeRecord::new(Interpretation::Instruction(Opcode::PUSH), OperandCode::PushIbs),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::IMUL), OperandCode::Gv_Ev_Ib),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::INS), OperandCode::Yb_DX),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::INS), OperandCode::Yv_DX),
@@ -5902,6 +5908,18 @@ fn read_operands<
         OperandCase::Internal | OperandCase::Gv_M |
         OperandCase::Ibs | OperandCase::Jvds => {
         }
+        OperandCase::PushIbs => {
+            instruction.mem_size = 8;
+            instruction.imm = read_imm_signed(words, 1)? as u32;
+            instruction.operands[0] = OperandSpec::ImmI8;
+            sink.record(
+                words.offset() as u32 * 8 - 8,
+                words.offset() as u32 * 8 - 1,
+                InnerDescription::Number("1-byte immediate", instruction.imm as i64)
+                    .with_id(words.offset() as u32 * 8)
+            );
+            instruction.operand_count = 1;
+        }
         OperandCase::SingleMMMOper => {
             instruction.operands[0] = mem_oper;
             instruction.operand_count = 1;
@@ -6414,7 +6432,9 @@ fn read_operands<
                     .with_id(words.offset() as u32 * 8 - bank as u8 as u32 * 8 + 1)
             );
         }
-        OperandCase::Ivs => {
+        OperandCase::PushIvs => {
+            instruction.mem_size = 4;
+
             if instruction.prefixes.operand_size() {
                 instruction.imm = read_imm_unsigned(words, 4)?;
                 instruction.operands[0] = OperandSpec::ImmI32;
@@ -6486,6 +6506,10 @@ fn read_operands<
                 instruction.mem_size = 2;
             } else if instruction.opcode == Opcode::XLAT {
                 instruction.mem_size = 1;
+            } else if instruction.opcode == Opcode::PUSHA {
+                instruction.mem_size = 2 * 8;
+            } else if instruction.opcode == Opcode::POPA {
+                instruction.mem_size = 2 * 8;
             }
             instruction.operands[0] = OperandSpec::Nothing;
             instruction.operand_count = 0;
@@ -8998,11 +9022,12 @@ fn read_operands<
         OperandCase::AbsFar => {
             instruction.operands[0] = OperandSpec::AbsoluteFarAddress;
             instruction.operand_count = 1;
-            instruction.mem_size = 0;
             // read segment
             let addr_size = if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2 + 2;
                 2
             } else {
+                instruction.mem_size = 4 + 2;
                 4
             };
             instruction.imm = read_num(words, addr_size)?;
