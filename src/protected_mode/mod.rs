@@ -248,6 +248,11 @@ impl RegSpec {
         ah => 4, ch => 5, dh => 6, bh => 7
     );
 
+    register!(CR,
+        cr0 => 0, cr1 => 1, cr2 => 2, cr3 => 3,
+        cr4 => 4, cr5 => 5, cr6 => 6, cr7 => 7
+    );
+
     #[inline]
     pub const fn zmm0() -> RegSpec {
         RegSpec { bank: RegisterBank::Z, num: 0 }
