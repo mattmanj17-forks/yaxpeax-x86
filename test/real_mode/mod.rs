@@ -231,6 +231,8 @@ fn test_real_mode() {
     test_display(&[0x0f, 0x3a, 0x0f, 0xc1, 0x23], "palignr mm0, mm1, 0x23");
     test_display(&[0x0f, 0x3a, 0xcc, 0x12, 0x40], "sha1rnds4 xmm2, xmmword [bp + si * 1], 0x40");
     test_display(&[0x0f, 0x3a, 0xcc, 0x12, 0xff], "sha1rnds4 xmm2, xmmword [bp + si * 1], 0xff");
+    // with astonishing dismay: 66-prefixed sha1rnds4 is #UD only in 32-bit and 16-bit mode.
+    test_invalid(&[0x66, 0x0f, 0x3a, 0xcc, 0x12, 0xff]);
     test_display(&[0x0f, 0x43, 0xec], "cmovnb bp, sp");
     test_display(&[0x0f, 0x50, 0xc1], "movmskps eax, xmm1");
     test_display(&[0x0f, 0x51, 0x01], "sqrtps xmm0, xmmword [bx + di * 1]");

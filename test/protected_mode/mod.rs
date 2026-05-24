@@ -2618,6 +2618,8 @@ fn test_rand() {
 fn test_sha() {
     test_display(&[0x0f, 0x3a, 0xcc, 0x12, 0x40], "sha1rnds4 xmm2, xmmword [edx], 0x40");
     test_display(&[0x0f, 0x3a, 0xcc, 0x12, 0xff], "sha1rnds4 xmm2, xmmword [edx], 0xff");
+    // with astonishing dismay: 66-prefixed sha1rnds4 is #UD only in 32-bit and 16-bit mode.
+    test_invalid(&[0x66, 0x0f, 0x3a, 0xcc, 0x12, 0xff]);
     test_display(&[0x0f, 0x38, 0xc8, 0x12], "sha1nexte xmm2, xmmword [edx]");
     test_display(&[0x0f, 0x38, 0xc9, 0x12], "sha1msg1 xmm2, xmmword [edx]");
     test_display(&[0x0f, 0x38, 0xca, 0x12], "sha1msg2 xmm2, xmmword [edx]");
