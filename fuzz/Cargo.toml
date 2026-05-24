@@ -66,6 +66,6 @@ test = false
 doc = false
 
 [features]
-default = ["unstable"]
+default = ["unstable", "yaxpeax-x86/_debug_internal_asserts"]
 
 unstable = ["yaxpeax-x86/unstable"]
