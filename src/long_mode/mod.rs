@@ -9297,7 +9297,6 @@ fn read_0f3a_opcode(&mut self, opcode: u8, prefixes: &mut Prefixes) -> Result<Op
             0x61 => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::PCMPESTRI), OperandCode::G_E_xmm_Ib)),
             0x62 => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::PCMPISTRM), OperandCode::G_E_xmm_Ib)),
             0x63 => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::PCMPISTRI), OperandCode::G_E_xmm_Ib)),
-//            0xcc => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::SHA1RNDS4), OperandCode::G_E_xmm_Ib)),
             0xce => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::GF2P8AFFINEQB), OperandCode::G_E_xmm_Ub)),
             0xcf => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::GF2P8AFFINEINVQB), OperandCode::G_E_xmm_Ub)),
             0xdf => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::AESKEYGENASSIST), OperandCode::G_E_xmm_Ub)),
@@ -9306,8 +9305,8 @@ fn read_0f3a_opcode(&mut self, opcode: u8, prefixes: &mut Prefixes) -> Result<Op
     }
 
     return match opcode {
-        0xcc => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::SHA1RNDS4), OperandCode::G_E_xmm_Ub)),
         0x0f => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::PALIGNR), OperandCode::G_E_mm_Ib)),
+        0xcc => Ok(OpcodeRecord::new(Interpretation::Instruction(Opcode::SHA1RNDS4), OperandCode::G_E_xmm_Ub)),
         _ => Err(DecodeError::InvalidOpcode)
     };
 }
