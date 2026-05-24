@@ -7946,7 +7946,11 @@ fn read_operands<
             instruction.operand_count = 2;
 
             if mem_oper == OperandSpec::RegMMM {
-                instruction.regs[1].bank = RegisterBank::D;
+                if instruction.prefixes.operand_size() {
+                    instruction.regs[1].bank = RegisterBank::W;
+                } else {
+                    instruction.regs[1].bank = RegisterBank::D;
+                }
             } else {
                 instruction.mem_size = 2;
             }
