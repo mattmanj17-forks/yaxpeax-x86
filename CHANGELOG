@@ -52,6 +52,13 @@
     size. an operand-size prefix now correctly overrides to pusha/popa.
 * 16-bit: an operand-size prefix now correctly overrides to pushad/popad.
   - likewise, thank you Stephen for spotting these issues!
+* Prefixes::operand_size and Prefixes::address_size are now public, reporting
+  if a 66 or 67 prefix is active for the decoded instruction. be aware that in
+  64-bit mode operand-size overrides interact in subtle ways with REX
+  prefixes and in particular REX.W takes precedence over operand-size in
+  practice.. most of the time. these are intended to be informative; if
+  application logic depends on them it is likely a yaxpeax-x86 bug.
+* Prefixes::segment is now public and reports the instruction's selected data segment.
 
 ## 2.0.0
 

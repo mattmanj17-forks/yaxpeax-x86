@@ -3440,20 +3440,28 @@ impl Prefixes {
     fn set_repnz(&mut self) { self.bits = (self.bits & 0xcf) | 0x30 }
     #[inline]
     pub fn rep_any(&self) -> bool { self.bits & 0x30 != 0x00 }
+    /// return `true` if an operand-size (`66`) prefix is active for the instruction.
+    ///
+    /// this interacts in subtle ways with a REX prefix, if both are present. if you are tempted to
+    /// refine decode logic based the result of this function, please report that as an issue.
     #[inline]
-    fn operand_size(&self) -> bool { self.bits & 0x1 == 1 }
+    pub fn operand_size(&self) -> bool { self.bits & 0x1 == 1 }
     #[inline]
     fn set_operand_size(&mut self) { self.bits = self.bits | 0x1 }
     #[inline]
     fn unset_operand_size(&mut self) { self.bits = self.bits & !0x1 }
+    /// return `true` if an operand-size (`67`) prefix is active for the instruction.
     #[inline]
-    fn address_size(&self) -> bool { self.bits & 0x2 == 2 }
+    pub fn address_size(&self) -> bool { self.bits & 0x2 == 2 }
     #[inline]
     fn set_address_size(&mut self) { self.bits = self.bits | 0x2 }
     #[inline]
     fn set_lock(&mut self) { self.bits |= 0x4 }
     #[inline]
     pub fn lock(&self) -> bool { self.bits & 0x4 == 4 }
+    /// return the instruction's selected data segment.
+    #[inline]
+    pub fn segment(&self) -> Segment { self.segment }
     #[inline]
     pub fn cs(&self) -> bool { self.segment == Segment::CS }
     #[inline]
