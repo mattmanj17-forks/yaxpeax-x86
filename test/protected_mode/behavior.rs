@@ -1708,6 +1708,20 @@ mod kvm {
             }
         }
 
+        if instr.opcode() == Opcode::MOV {
+            if let Operand::Register { reg } = instr.operand(0) {
+                if reg.class() == register_class::S {
+                    // mov to segment selector can #GP if the selector is invalid:
+                    // > If the DS, ES, FS, or GS register is being loaded and the
+                    // > segment pointed to is not a data or readable code segment.
+                    //
+                    // and even if the VM continues, results will be unpredictable with segment
+                    // registers full of random data..
+                    return true;
+                }
+            }
+        }
+
         if instr.opcode() == Opcode::BOUND {
             // when bound *does things*, it's a #BR exception.
             return true;
