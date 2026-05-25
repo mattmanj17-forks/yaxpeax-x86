@@ -5774,13 +5774,14 @@ fn read_operands<
             0 => {
                 // these are Zv_R
                 let bank = if !instruction.prefixes.operand_size() {
+                    instruction.mem_size = 4;
                     RegisterBank::D
                 } else {
+                    instruction.mem_size = 2;
                     RegisterBank::W
                 };
                 instruction.regs[0] =
                     RegSpec::from_parts(reg, bank);
-                instruction.mem_size = 4;
                 sink.record(
                     opcode_start + 0,
                     opcode_start + 2,

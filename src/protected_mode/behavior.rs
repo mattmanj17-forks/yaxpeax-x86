@@ -129,6 +129,16 @@ impl Instruction {
                         .set_operand(1, Access::Read)
                         .set_operand(2, Access::Read);
                 }
+            } else if self.opcode == Opcode::PUSH {
+               if self.prefixes.operand_size() {
+                   behavior = behavior
+                       .set_implicit_ops(PUSHS_OPS_IDX);
+               }
+            } else if self.opcode == Opcode::PUSHF {
+               if self.prefixes.operand_size() {
+                   behavior = behavior
+                       .set_implicit_ops(PUSHFS_OPS_IDX);
+               }
             } else if self.opcode == Opcode::DIV || self.opcode == Opcode::IDIV {
                 let op_width = if self.operands[0] == OperandSpec::RegMMM {
                     self.regs[1].width()
@@ -1914,7 +1924,29 @@ static PUSH_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Disp,
         reg: RegSpec::esp(),
-        disp: -8i32,
+        disp: -4i32,
+        write: true,
+    },
+    // push.. pushes the value (above), then does a RMW on rsp.
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: true,
+    }
+];
+
+static PUSHS_OPS: &'static [ImplicitOperand] = &[
+    ImplicitOperand {
+        spec: OperandSpec::Disp,
+        reg: RegSpec::esp(),
+        disp: -2i32,
         write: true,
     },
     // push.. pushes the value (above), then does a RMW on rsp.
@@ -2081,7 +2113,35 @@ static PUSHF_OPS: &'static [ImplicitOperand] = &[
     ImplicitOperand {
         spec: OperandSpec::Disp,
         reg: RegSpec::esp(),
-        disp: -8i32,
+        disp: -4i32,
+        write: true,
+    },
+    // push.. pushes the value (above), then does a RMW on rsp.
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::esp(),
+        disp: 0,
+        write: true,
+    }
+];
+
+static PUSHFS_OPS: &'static [ImplicitOperand] = &[
+    ImplicitOperand {
+        spec: OperandSpec::RegRRR,
+        reg: RegSpec::eflags(),
+        disp: 0,
+        write: false,
+    },
+    ImplicitOperand {
+        spec: OperandSpec::Disp,
+        reg: RegSpec::esp(),
+        disp: -2i32,
         write: true,
     },
     // push.. pushes the value (above), then does a RMW on rsp.
@@ -3726,8 +3786,10 @@ const PUSHA_IDX: u16 = 74;
 const POPA_IDX: u16 = 75;
 const PUSHAD_IDX: u16 = 76;
 const POPAD_IDX: u16 = 77;
+const PUSHS_OPS_IDX: u16 = 78;
+const PUSHFS_OPS_IDX: u16 = 79;
 
-static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 78] = [
+static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 80] = [
     &[], // implicit ops list 0 is not used
     PUSH_OPS,
     POP_OPS,
@@ -3806,6 +3868,8 @@ static IMPLICIT_OPS_LIST: [&[ImplicitOperand]; 78] = [
     POPA_OPS,
     PUSHAD_OPS,
     POPAD_OPS,
+    PUSHS_OPS,
+    PUSHFS_OPS,
 ];
 
 fn opcode2behavior(opc: &Opcode) -> BehaviorDigest {
@@ -3942,6 +4006,7 @@ static TABLE: [BehaviorDigest; 1428] = [
             .set_operand(0, Access::Read),
     /* PUSH => */ BehaviorDigest::empty()
             .set_implicit_ops(PUSH_OPS_IDX)
+            .set_nontrivial(true)
             .set_pl_any()
             .set_operand(0, Access::Read),
     /* POP => */ BehaviorDigest::empty()
@@ -3989,6 +4054,7 @@ static TABLE: [BehaviorDigest; 1428] = [
             .set_pl_any(),
     /* PUSHF => */ BehaviorDigest::empty()
             .set_implicit_ops(PUSHF_IDX)
+            .set_nontrivial(true)
             .set_pl_any(),
     /* WAIT => */ GENERAL,
     /* CBW => */ BehaviorDigest::empty()

@@ -5800,13 +5800,14 @@ fn read_operands<
             0 => {
                 // these are Zv_R
                 let bank = if instruction.prefixes.operand_size() {
+                    instruction.mem_size = 4;
                     RegisterBank::D
                 } else {
+                    instruction.mem_size = 2;
                     RegisterBank::W
                 };
                 instruction.regs[0] =
                     RegSpec::from_parts(reg, bank);
-                instruction.mem_size = 2;
                 sink.record(
                     opcode_start + 0,
                     opcode_start + 2,
@@ -6517,9 +6518,17 @@ fn read_operands<
             } else if instruction.opcode == Opcode::RETF {
                 instruction.mem_size = 4;
             } else if instruction.opcode == Opcode::POPF {
-                instruction.mem_size = 2;
+                if !instruction.prefixes.operand_size() {
+                    instruction.mem_size = 2;
+                } else {
+                    instruction.mem_size = 4;
+                }
             } else if instruction.opcode == Opcode::PUSHF {
-                instruction.mem_size = 2;
+                if !instruction.prefixes.operand_size() {
+                    instruction.mem_size = 2;
+                } else {
+                    instruction.mem_size = 4;
+                }
             } else if instruction.opcode == Opcode::LEAVE {
                 instruction.mem_size = 2;
             } else if instruction.opcode == Opcode::XLAT {
@@ -8801,7 +8810,11 @@ fn read_operands<
             instruction.operand_count = 1;
 
             // see the comment on mem size as written in OperandCase::FS
-            instruction.mem_size = 2;
+            if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2;
+            } else {
+                instruction.mem_size = 4;
+            }
         }
         OperandCase::DS => {
             instruction.regs[0] = RegSpec::ds();
@@ -8809,7 +8822,11 @@ fn read_operands<
             instruction.operand_count = 1;
 
             // see the comment on mem size as written in OperandCase::FS
-            instruction.mem_size = 2;
+            if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2;
+            } else {
+                instruction.mem_size = 4;
+            }
         }
         OperandCase::ES => {
             instruction.regs[0] = RegSpec::es();
@@ -8817,7 +8834,11 @@ fn read_operands<
             instruction.operand_count = 1;
 
             // see the comment on mem size as written in OperandCase::FS
-            instruction.mem_size = 2;
+            if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2;
+            } else {
+                instruction.mem_size = 4;
+            }
         }
         OperandCase::SS => {
             instruction.regs[0] = RegSpec::ss();
@@ -8825,7 +8846,11 @@ fn read_operands<
             instruction.operand_count = 1;
 
             // see the comment on mem size as written in OperandCase::FS
-            instruction.mem_size = 2;
+            if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2;
+            } else {
+                instruction.mem_size = 4;
+            }
         }
         OperandCase::FS => {
             instruction.regs[0] = RegSpec::fs();
@@ -8842,7 +8867,11 @@ fn read_operands<
             // the memory size here really depends on the `Default` bit in the CS descriptor. if
             // the default operand size is 64 bits (basically all long-mode code), the acccess is
             // 8 bytes (zero extended). if the default operand size is 32 bits, this is more complex.
-            instruction.mem_size = 2;
+            if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2;
+            } else {
+                instruction.mem_size = 4;
+            }
         }
         OperandCase::GS => {
             instruction.regs[0] = RegSpec::gs();
@@ -8850,7 +8879,11 @@ fn read_operands<
             instruction.operand_count = 1;
 
             // see the comment on mem size as written in OperandCase::FS
-            instruction.mem_size = 2;
+            if !instruction.prefixes.operand_size() {
+                instruction.mem_size = 2;
+            } else {
+                instruction.mem_size = 4;
+            }
         }
         OperandCase::AL_Ib => {
             instruction.regs[0] =
