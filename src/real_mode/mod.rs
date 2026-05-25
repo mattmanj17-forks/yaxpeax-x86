@@ -3966,7 +3966,6 @@ enum OperandCase {
     Yb_AL,
     Yb_Xb,
     Yv_AX,
-    Ew_Gw,
     ES,
     CS,
     SS,
@@ -4319,7 +4318,6 @@ enum OperandCode {
     Yb_AL = OperandCodeBuilder::new().operand_case(OperandCase::Yb_AL).bits(),
     Yb_Xb = OperandCodeBuilder::new().operand_case(OperandCase::Yb_Xb).bits(),
     Yv_AX = OperandCodeBuilder::new().operand_case(OperandCase::Yv_AX).bits(),
-    Ew_Gw = OperandCodeBuilder::new().operand_case(OperandCase::Ew_Gw).bits(),
     ES = OperandCodeBuilder::new().operand_case(OperandCase::ES).bits(),
     CS = OperandCodeBuilder::new().operand_case(OperandCase::CS).bits(),
     SS = OperandCodeBuilder::new().operand_case(OperandCase::SS).bits(),
@@ -4496,7 +4494,7 @@ const OPCODES: [OpcodeRecord; 256] = [
     OpcodeRecord::new(Interpretation::Instruction(Opcode::PUSHA), OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::POPA), OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::BOUND), OperandCode::ModRM_0x62),
-    OpcodeRecord::new(Interpretation::Instruction(Opcode::ARPL), OperandCode::Ew_Gw),
+    OpcodeRecord::new(Interpretation::Instruction(Opcode::Invalid), OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Prefix, OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Prefix, OperandCode::Nothing),
     OpcodeRecord::new(Interpretation::Prefix, OperandCode::Nothing),
@@ -9067,16 +9065,6 @@ fn read_operands<
             instruction.imm = read_num(words, addr_size)?;
             instruction.disp = read_num(words, 2)? as u16 as u32;
         }
-        OperandCase::Ew_Gw => {
-            let modrm = read_modrm(words)?;
-
-            instruction.regs[0] =
-                RegSpec { bank: RegisterBank::W, num: (modrm >> 3) & 7 };
-            instruction.operands[0] = read_E(words, instruction, modrm, RegisterBank::W, sink)?;
-            instruction.operands[1] = OperandSpec::RegRRR;
-            instruction.mem_size = 2;
-            instruction.operand_count = 2;
-        },
         OperandCase::CXZ => {
             if instruction.prefixes.address_size() {
                 // address-size overridden from 16-bit to 32-bit
