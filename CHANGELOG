@@ -1,5 +1,7 @@
 ## 2.1.0
 
+### additions
+
 * x86-64, x86-32, and x86-16 instructions now have associated behavior information
   (operand read/write, exceptions, privilege levels) accessible via `Instruction::behavior()`.
   the new `behavior` modules include examples and further discussion of the new APIs.
@@ -9,17 +11,50 @@
     not all feature flags are fully implemented. in such cases, instructions will be decoded
     even when their corresponding extension is not selected.
 * added uarch-specific decoders for Zen 2, Zen 3, Zen 4, and Zen 5
-* removed 3DNow support from AMD uarch-specific decoders after K10
 * RegSpec register helpers to construct RegSpec from register numbers are now const fn
   (RegSpec::xmm, RegSpec::q, RegSpec::d, RegSpec::st, etc)
 * new crate feature flag, `unstable`, for library features that may see
   breaking changes across semver-compatible releases.
+* Prefixes::operand_size and Prefixes::address_size are now public, reporting
+  if a 66 or 67 prefix is active for the decoded instruction. be aware that in
+  64-bit mode operand-size overrides interact in subtle ways with REX
+  prefixes and in particular REX.W takes precedence over operand-size in
+  practice.. most of the time. these are intended to be informative; if
+  application logic depends on them it is likely a yaxpeax-x86 bug.
+* Prefixes::segment is now public and reports the instruction's selected data segment.
+
+### fixes
+
+many changes along the way that reject previously erroneously-accepted
+instructions, as well as fixing issues related to operand reporting in the face
+of operand/address size prefixes. these are grouped together for library users
+that may have considered yaxpeax-x86 decoding alongside external information
+like raw instruction bytes.
+
+* fix pextr{b,w,d,q} and extractps first and second operands being backwards.
+* removed 3DNow support from AMD uarch-specific decoders after K10
+* reject so many invalid AVX512 encodings (instructions which do not support broadcast,
+  or rounding, or require W=0/W=1, etc).
+* jrcxz/jecxz/jcxz are overridden based on address-size prefix to select their
+  mode-appropriate alternate forms: jecxz/jcxz/jecxz.
+  - thank you Stephen for the report!
+* 32-bit: pusha/popa default to pushad/popad to reflect the default operand
+    size. an operand-size prefix now correctly overrides to pusha/popa.
+* 16-bit: an operand-size prefix now correctly overrides to pushad/popad.
+  - likewise, thank you Stephen for spotting these issues!
 * for uarch-specific decoding, there is now a feature bit for Intel Key Locker. this corrects an
   issue where Key Locker instructions would decode under AMD-specific decoders.
-* push-immediate, pushf, popf, pusha, popa, enter, leave, and xlat now all report a correct memory
-  access size, fixing the prior behavior of reporting no memory access size at all
-* table load/store instructions (lgdt, lidt, lldt, sgdt, sidt, sldt) have correct (mode-dependent)
-  memory access sizes, rather than incorrectly varying on operand-size overrides.
+* reject 0f0d prefetch/nop with a register operand, which was incorrectly decoded before.
+* fix incorrect operand order for VEX-encoded vmovupd opcode 0x11.
+* reject a few VEX-encoded instructions that are specific about allowed W-bits.
+  vcvtph2ps, vbroadcastf128, vmaskmovps, vmaskmovpd, vpermd,
+  vpbroadcast{b,w,d,q}, vinserti128, vextracti128, vblendv*, among others.
+* vpbroadcastb and vpbroadcastw should respect the L bit to select xmm/ymm vector width, but
+  always decoded as ymm.
+* correct swapped operand order of 0xD6-opcode movq. in 32/16-bit, fix this opcode being decoded as vmovd.
+* some instructions (such as invept, invvpid) were accepted by uarch-specific
+  deocders when they should not have been.
+* disallow 66-prefixed `sha1rnds4`.
 * mov seg-to-reg has more careful destination GPR selection.
   * 64-bit: use 32-bit GPRs for the destination rather than 16-bit.
     - this is more accurate to the semantic of the instruction, which is why other disassemblers
@@ -28,37 +63,18 @@
       zero-extend, whereas writing to "ax" does not imply any zero-extension. mov reg-to-seg
       is unchanged and uses a 16-bit form for source GPR.
   * 32-bit, 16-bit: use 32-bit or 16-bit GPRs as requested by mode and operand size prefixes.
-* fix pextr{b,w,d,q} and extractps first and second operands being backwards.
-* reject 0f0d prefetch/nop with a register operand, which was incorrectly decoded before.
+
+#### implicit memory sizes
+
+many instructions had implicit memory accesses but no reported memory access size.
+
+* push-immediate, pushf, popf, pusha, popa, enter, leave, and xlat now all report a correct memory
+  access size, fixing the prior behavior of reporting no memory access size at all
+* table load/store instructions (lgdt, lidt, lldt, sgdt, sidt, sldt) have correct (mode-dependent)
+  memory access sizes, rather than incorrectly varying on operand-size overrides.
 * maskmovq and maskmovdqu now have their implicit memory access size reported correctly.
-* monitor now reports a 1-byte memory access size. the monitored range in practice depends on CPUID.
-* fix incorrect operand order for VEX-encoded vmovupd opcode 0x11.
-* reject a few VEX-encoded instructions that are specific about allowed W-bits.
-  vcvtph2ps, vbroadcastf128, vmaskmovps, vmaskmovpd, vpermd,
-  vpbroadcast{b,w,d,q}, vinserti128, vextracti128, vblendv*, among others.
-* vpbroadcastb and vpbroadcastw should respect the L bit to select xmm/ymm vector width, but
-  always decoded as ymm.
 * vmaskmovqdu now reports a memory access size for the implied write to ds:[rdi/edi/di].
-* correct swapped operand order of 0xD6-opcode movq. in 32/16-bit, fix this opcode being decoded as vmovd.
-* reject so many invalid AVX512 encodings (instructions which do not support broadcast,
-  or rounding, or require W=0/W=1, etc).
-* some instructions (such as invept, invvpid) were accepted by uarch-specific
-  deocders when they should not have been.
-* disallow 66-prefixed `sha1rnds4`.
-* jrcxz/jecxz/jcxz are overridden based on address-size prefix to select their
-  mode-appropriate alternate forms: jecxz/jcxz/jecxz.
-  - thank you Stephen for the report!
-* 32-bit: pusha/popa default to pushad/popad to reflect the default operand
-    size. an operand-size prefix now correctly overrides to pusha/popa.
-* 16-bit: an operand-size prefix now correctly overrides to pushad/popad.
-  - likewise, thank you Stephen for spotting these issues!
-* Prefixes::operand_size and Prefixes::address_size are now public, reporting
-  if a 66 or 67 prefix is active for the decoded instruction. be aware that in
-  64-bit mode operand-size overrides interact in subtle ways with REX
-  prefixes and in particular REX.W takes precedence over operand-size in
-  practice.. most of the time. these are intended to be informative; if
-  application logic depends on them it is likely a yaxpeax-x86 bug.
-* Prefixes::segment is now public and reports the instruction's selected data segment.
+* monitor now reports a 1-byte memory access size. the monitored range in practice depends on CPUID.
 
 ## 2.0.0
 
