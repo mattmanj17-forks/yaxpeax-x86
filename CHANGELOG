@@ -25,6 +25,17 @@
 
 ### fixes
 
+the behavior additions mentioned above have been tested by running x86
+instructions (64-, 32-, and 16-bit) under asmlinator: https://crates.io/crates/asmlinator
+
+this made obvious many cases where yaxpeax-x86 allowed instructions that
+hardware disallowed, was too permissive about VEX/EVEX bits (treating W as WIG
+when SDM/APM define it as fixed 0 or 1), some cases of swapped operands, and
+several cases of unreported memory access sizes. so, there is a relatively
+large set of fixes and refinements to instruction rejection, all in the
+direction of being closer to actual hardware decoding logic. in most cases,
+this also brings yaxpeax-x86 more in-line with Intel XED, Zydis, etc.
+
 many changes along the way that reject previously erroneously-accepted
 instructions, as well as fixing issues related to operand reporting in the face
 of operand/address size prefixes. these are grouped together for library users
