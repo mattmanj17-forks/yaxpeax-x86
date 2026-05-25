@@ -229,8 +229,7 @@ impl Instruction {
                 }
             } else if self.opcode() == Opcode::LOOPNZ
                 || self.opcode() == Opcode::LOOPZ
-                || self.opcode() == Opcode::LOOP
-                || self.opcode() == Opcode::JRCXZ {
+                || self.opcode() == Opcode::LOOP {
                if self.prefixes.rex_unchecked().w() {
                    behavior = behavior
                        .set_implicit_ops(RW_RCX_IDX);
@@ -3559,7 +3558,7 @@ fn behavior_table_size_is_right() {
 }
 
 /// this table MUST line up with Opcode declaration order in `mod.rs`.
-static TABLE: [BehaviorDigest; 1413] = [
+static TABLE: [BehaviorDigest; 1414] = [
     /* ADD => */ GENERAL_RW_R_FLAGWRITE,
     /* OR => */ GENERAL_RW_R_FLAGWRITE,
     /* ADC => */ GENERAL_RW_R_FLAGRW,
@@ -5167,7 +5166,7 @@ static TABLE: [BehaviorDigest; 1413] = [
     /* JRCXZ => */ BehaviorDigest::empty()
             .set_pl_any()
             .set_operand(0, Access::Read)
-            .set_nontrivial(true),
+            .set_implicit_ops(RW_RCX_IDX),
 
         // started shipping in Tremont, 2020 sept 23
         // while this instruction is marked "write, read", the written first operand is a register
@@ -5871,4 +5870,9 @@ static TABLE: [BehaviorDigest; 1413] = [
             .set_pl0()
             .set_flags_access(Access::Write)
             .set_complex(true),
+
+    /* JECXZ => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_operand(0, Access::Read)
+            .set_implicit_ops(RW_ECX_IDX),
 ];

@@ -2094,6 +2094,10 @@ const MNEMONICS: &[&'static str] = &[
     "pvalidate",
     "rmpadjust",
     "rmpupdate",
+
+    "pushad",
+    "popad",
+    "jecxz",
 ];
 
 impl Opcode {
@@ -2572,6 +2576,10 @@ pub(crate) fn contextualize_c<T: DisplaySink>(instr: &Instruction, out: &mut T) 
             out.write_str("jmp ")?;
             write_jmp_operand(instr.operand(0), out)?;
         },
+        Opcode::JECXZ => {
+            out.write_str("if ecx == 0 then jmp ")?;
+            write_jmp_operand(instr.operand(0), out)?;
+        },
         Opcode::JCXZ => {
             out.write_str("if cx == 0 then jmp ")?;
             write_jmp_operand(instr.operand(0), out)?;
@@ -2766,8 +2774,9 @@ impl <T: fmt::Write, Y: YaxColors> ShowContextual<u64, [Option<alloc::string::St
     }
 }
 
-static RELATIVE_BRANCHES: [Opcode; 22] = [
-    Opcode::JMP, Opcode::CALL, Opcode::JCXZ,
+static RELATIVE_BRANCHES: [Opcode; 23] = [
+    Opcode::JMP, Opcode::CALL,
+    Opcode::JECXZ, Opcode::JCXZ,
     Opcode::LOOP, Opcode::LOOPZ, Opcode::LOOPNZ,
     Opcode::JO, Opcode::JNO,
     Opcode::JB, Opcode::JNB,

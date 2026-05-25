@@ -1160,6 +1160,8 @@ fn test_control_flow() {
     test_display(&[0xe2, 0x12], "loop $+0x12");
     test_display(&[0xe3, 0x12], "jecxz $+0x12");
     test_display(&[0xe3, 0xf0], "jecxz $-0x10");
+    test_display(&[0x67, 0xe3, 0x12], "jcxz $+0x12");
+    test_display(&[0x67, 0xe3, 0xf0], "jcxz $-0x10");
     test_display(&[0xc3], "ret");
 }
  
@@ -2528,8 +2530,10 @@ fn only_32bit() {
     test_display(&[0x67, 0xa1, 0xc0, 0xb0], "mov eax, dword [0xb0c0]");
     test_display(&[0x66, 0x67, 0xa1, 0xc0, 0xb0], "mov ax, word [0xb0c0]");
 
-    test_display(&[0x60], "pusha");
-    test_display(&[0x61], "popa");
+    test_display(&[0x60], "pushad");
+    test_display(&[0x61], "popad");
+    test_display(&[0x66, 0x60], "pusha");
+    test_display(&[0x66, 0x61], "popa");
     test_display(&[0xce], "into");
     test_display(&[0x06], "push es");
     test_display(&[0x07], "pop es");

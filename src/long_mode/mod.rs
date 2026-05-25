@@ -2593,6 +2593,9 @@ pub enum Opcode {
     PVALIDATE,
     RMPADJUST,
     RMPUPDATE,
+
+    // this was present since initial x86-64 but the library missed the prefix handling..
+    JECXZ,
 }
 
 impl PartialEq for Instruction {
@@ -4047,6 +4050,7 @@ enum OperandCase {
     ModRM_0xf30f38fa,
     ModRM_0xf30f38fb,
     ModRM_0xf30f3af0,
+    CXZ,
 }
 
 #[allow(non_camel_case_types)]
@@ -4381,6 +4385,7 @@ enum OperandCode {
     Ev_G_xmm_Ib = OperandCodeBuilder::new().read_E().operand_case(OperandCase::Ev_G_xmm_Ib).bits(),
     G_E_mm_Ib = OperandCodeBuilder::new().read_E().operand_case(OperandCase::G_E_mm_Ib).bits(),
     MASKMOVDQU = OperandCodeBuilder::new().read_E().reg_mem().operand_case(OperandCase::MASKMOVDQU).bits(),
+    CXZ = OperandCodeBuilder::new().operand_case(OperandCase::CXZ).bits(),
 }
 
 fn base_opcode_map(v: u8) -> Opcode {
@@ -4684,7 +4689,7 @@ const OPCODES: [OpcodeRecord; 256] = [
     OpcodeRecord::new(Interpretation::Instruction(Opcode::LOOPNZ), OperandCode::Ibs),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::LOOPZ), OperandCode::Ibs),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::LOOP), OperandCode::Ibs),
-    OpcodeRecord::new(Interpretation::Instruction(Opcode::JRCXZ), OperandCode::Ibs),
+    OpcodeRecord::new(Interpretation::Instruction(Opcode::JRCXZ), OperandCode::CXZ),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::IN), OperandCode::AL_Ib),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::IN), OperandCode::AX_Ib),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::OUT), OperandCode::Ib_AL),
@@ -9117,6 +9122,21 @@ fn read_operands<
                 instruction.regs[0].bank = RegisterBank::Q;
             };
         }
+        OperandCase::CXZ => {
+            if instruction.prefixes.address_size() {
+                // address-size overridden from 64-bit to 32-bit
+                instruction.opcode = Opcode::JECXZ;
+            }
+            instruction.imm =
+                read_imm_signed(words, 1)? as u64;
+            sink.record(
+                words.offset() as u32 * 8 - 8,
+                words.offset() as u32 * 8 - 1,
+                InnerDescription::Number("1-byte immediate", instruction.imm as i64)
+                    .with_id(words.offset() as u32 * 8),
+            );
+            instruction.operands[0] = OperandSpec::ImmI8;
+        },
     };
     Ok(())
 }

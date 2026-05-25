@@ -140,22 +140,6 @@ impl Instruction {
                         .set_operand(1, Access::Read)
                         .set_operand(2, Access::Read);
                 }
-            } else if self.opcode == Opcode::PUSHA {
-                if self.prefixes.operand_size() {
-                    behavior = behavior
-                        .set_implicit_ops(PUSHAD_IDX);
-                } else {
-                    behavior = behavior
-                        .set_implicit_ops(PUSHA_IDX);
-                }
-            } else if self.opcode == Opcode::POPA {
-                if self.prefixes.operand_size() {
-                    behavior = behavior
-                        .set_implicit_ops(POPAD_IDX);
-                } else {
-                    behavior = behavior
-                        .set_implicit_ops(POPA_IDX);
-                }
             } else if self.opcode == Opcode::DIV || self.opcode == Opcode::IDIV {
                 let op_width = if self.operands[0] == OperandSpec::RegMMM {
                     self.regs[1].width()
@@ -257,8 +241,7 @@ impl Instruction {
                 }
             } else if self.opcode() == Opcode::LOOPNZ
                 || self.opcode() == Opcode::LOOPZ
-                || self.opcode() == Opcode::LOOP
-                || self.opcode() == Opcode::JCXZ {
+                || self.opcode() == Opcode::LOOP {
                if !self.prefixes.operand_size() {
                    behavior = behavior
                        .set_implicit_ops(RW_CX_IDX);
@@ -3808,7 +3791,7 @@ fn behavior_table_size_is_right() {
 }
 
 /// this table MUST line up with Opcode declaration order in `mod.rs`.
-static TABLE: [BehaviorDigest; 1425] = [
+static TABLE: [BehaviorDigest; 1428] = [
     /* ADD => */ GENERAL_RW_R_FLAGWRITE,
     /* OR => */ GENERAL_RW_R_FLAGWRITE,
     /* ADC => */ GENERAL_RW_R_FLAGRW,
@@ -5424,14 +5407,14 @@ static TABLE: [BehaviorDigest; 1425] = [
     /* JCXZ => */ BehaviorDigest::empty()
             .set_pl_any()
             .set_operand(0, Access::Read)
-            .set_nontrivial(true),
+            .set_implicit_ops(RW_CX_IDX),
 
     /* PUSHA => */ BehaviorDigest::empty()
             .set_pl_any()
-            .set_nontrivial(true),
+            .set_implicit_ops(PUSHA_IDX),
     /* POPA => */ BehaviorDigest::empty()
             .set_pl_any()
-            .set_nontrivial(true),
+            .set_implicit_ops(POPA_IDX),
     /* BOUND => */ BehaviorDigest::empty()
             .set_pl_any()
             .set_operand(0, Access::Read)
@@ -6170,4 +6153,15 @@ static TABLE: [BehaviorDigest; 1425] = [
             .set_pl0()
             .set_flags_access(Access::Write)
             .set_complex(true),
+
+    /* PUSHAD => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_implicit_ops(PUSHAD_IDX),
+    /* POPAD => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_implicit_ops(POPAD_IDX),
+    /* JECXZ => */ BehaviorDigest::empty()
+            .set_pl_any()
+            .set_operand(0, Access::Read)
+            .set_implicit_ops(RW_ECX_IDX),
 ];

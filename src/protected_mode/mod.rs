@@ -2511,6 +2511,13 @@ pub enum Opcode {
     PVALIDATE,
     RMPADJUST,
     RMPUPDATE,
+
+    // these were part of the base ISA but were reported as distinct opcodes relatively late.
+    PUSHAD,
+    POPAD,
+
+    // likewise with alternate-size jecxz/jcxz..
+    JCXZ,
 }
 
 impl PartialEq for Instruction {
@@ -3965,6 +3972,7 @@ enum OperandCase {
     ModRM_0xf30f38fa,
     ModRM_0xf30f38fb,
     ModRM_0xf30f3af0,
+    CXZ,
 }
 
 #[allow(non_camel_case_types)]
@@ -4292,6 +4300,7 @@ enum OperandCode {
     ModRM_0xc4 = OperandCodeBuilder::new().operand_case(OperandCase::ModRM_0xc4).bits(),
     ModRM_0xc5 = OperandCodeBuilder::new().operand_case(OperandCase::ModRM_0xc5).bits(),
     MASKMOVDQU = OperandCodeBuilder::new().read_E().reg_mem().operand_case(OperandCase::MASKMOVDQU).bits(),
+    CXZ = OperandCodeBuilder::new().operand_case(OperandCase::CXZ).bits(),
 }
 
 fn base_opcode_map(v: u8) -> Opcode {
@@ -4595,7 +4604,7 @@ const OPCODES: [OpcodeRecord; 256] = [
     OpcodeRecord::new(Interpretation::Instruction(Opcode::LOOPNZ), OperandCode::Ibs),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::LOOPZ), OperandCode::Ibs),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::LOOP), OperandCode::Ibs),
-    OpcodeRecord::new(Interpretation::Instruction(Opcode::JECXZ), OperandCode::Ibs),
+    OpcodeRecord::new(Interpretation::Instruction(Opcode::JECXZ), OperandCode::CXZ),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::IN), OperandCode::AL_Ib),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::IN), OperandCode::AX_Ib),
     OpcodeRecord::new(Interpretation::Instruction(Opcode::OUT), OperandCode::Ib_AL),
@@ -6476,9 +6485,19 @@ fn read_operands<
             } else if instruction.opcode == Opcode::XLAT {
                 instruction.mem_size = 1;
             } else if instruction.opcode == Opcode::PUSHA {
-                instruction.mem_size = 4 * 8;
+                if instruction.prefixes.operand_size() {
+                    instruction.mem_size = 2 * 8;
+                } else {
+                    instruction.opcode = Opcode::PUSHAD;
+                    instruction.mem_size = 4 * 8;
+                }
             } else if instruction.opcode == Opcode::POPA {
-                instruction.mem_size = 4 * 8;
+                if instruction.prefixes.operand_size() {
+                    instruction.mem_size = 2 * 8;
+                } else {
+                    instruction.opcode = Opcode::POPAD;
+                    instruction.mem_size = 4 * 8;
+                }
             }
             instruction.operands[0] = OperandSpec::Nothing;
             instruction.operand_count = 0;
@@ -9010,6 +9029,21 @@ fn read_operands<
             instruction.operands[1] = OperandSpec::RegRRR;
             instruction.mem_size = 2;
             instruction.operand_count = 2;
+        },
+        OperandCase::CXZ => {
+            if instruction.prefixes.address_size() {
+                // address-size overridden from 32-bit to 16-bit
+                instruction.opcode = Opcode::JCXZ;
+            }
+            instruction.imm =
+                read_imm_signed(words, 1)? as u32;
+            sink.record(
+                words.offset() as u32 * 8 - 8,
+                words.offset() as u32 * 8 - 1,
+                InnerDescription::Number("1-byte immediate", instruction.imm as i64)
+                    .with_id(words.offset() as u32 * 8),
+            );
+            instruction.operands[0] = OperandSpec::ImmI8;
         },
     };
     Ok(())

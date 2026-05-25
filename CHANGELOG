@@ -45,6 +45,13 @@
 * some instructions (such as invept, invvpid) were accepted by uarch-specific
   deocders when they should not have been.
 * disallow 66-prefixed `sha1rnds4`.
+* jrcxz/jecxz/jcxz are overridden based on address-size prefix to select their
+  mode-appropriate alternate forms: jecxz/jcxz/jecxz.
+  - thank you Stephen for the report!
+* 32-bit: pusha/popa default to pushad/popad to reflect the default operand
+    size. an operand-size prefix now correctly overrides to pusha/popa.
+* 16-bit: an operand-size prefix now correctly overrides to pushad/popad.
+  - likewise, thank you Stephen for spotting these issues!
 
 ## 2.0.0
 
