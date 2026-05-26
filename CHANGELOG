@@ -1,3 +1,8 @@
+## 2.1.1
+
+* fix jrcxz/jecxz/jcxz having "two operands". accessing the "second" operand
+  through `Instruction::operand` is a guaranteed panic.
+
 ## 2.1.0
 
 ### additions

@@ -9144,6 +9144,7 @@ fn read_operands<
                     .with_id(words.offset() as u32 * 8),
             );
             instruction.operands[0] = OperandSpec::ImmI8;
+            instruction.operand_count = 1;
         },
     };
     Ok(())
