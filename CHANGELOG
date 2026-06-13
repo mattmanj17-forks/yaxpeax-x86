@@ -1,3 +1,12 @@
+## 2.2.0
+
+* `Instruction::invalid()` returns instructions with opcode `Opcode::Invalid`, rather than nop.
+  decoding an instruction with `opcode == Invalid` was already possible through attempting
+  to decode invalid opcodes into a `&mut Instruction`; `invalid()` returning a no-operand
+  nop dates back to initial versions of the library attempting to never return instructions
+  that did not reflect a decoded x86 instruction.
+  it has long passed its time. thank you for the patch, @Grond66!
+
 ## 2.1.1
 
 * fix jrcxz/jecxz/jcxz having "two operands". accessing the "second" operand
